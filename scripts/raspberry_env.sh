@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export ROS_IP=155.207.33.186
+export ROS_IP=10.0.1.2
 
 source /home/ubuntu/rpi_ws/devel/setup.bash --extend
 

@@ -4,11 +4,12 @@
 #include <vector>
 
 #include "sensor_msgs/Image.h"
+#include "flir_lepton_hardware_interface/flirLeptonMsg.h"
 
 #include "flir_lepton_hardware_interface/flir_lepton_hardware_interface.h"
 
-#define MIN_VALUE 7900
-#define MAX_VALUE 8500
+#define MIN_VALUE 7500
+#define MAX_VALUE 8600
 
 namespace flir_lepton_hardware_interface
 {
@@ -78,7 +79,9 @@ namespace flir_lepton_hardware_interface
     
 
     sensor_msgs::Image thermalImage;
+    flir_lepton_hardware_interface::flirLeptonMsg flirMsg;
     createMsg(thermal_signals_, &thermalImage, minValue, maxValue);
+    createFlirMsg(thermal_signals_, &flirMsg, minValue, maxValue);
     flir_lepton_image_publisher_.publish(thermalImage);
   }
 
@@ -175,6 +178,13 @@ namespace flir_lepton_hardware_interface
     }
   }
 
+  void FlirLeptonHardwareInterface::createFlirMsg(
+    const std::vector<uint16_t>& thermal_signals, 
+    flir_lepton_hardware_interface::flirLeptonMsg* flirMsg, 
+    uint16_t minValue, uint16_t maxValue)
+  {
+    
+  }
 
   uint8_t FlirLeptonHardwareInterface::signalToImageValue(uint16_t signal,
     uint16_t minVal, uint16_t maxVal)

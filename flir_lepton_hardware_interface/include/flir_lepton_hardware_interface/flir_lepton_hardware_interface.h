@@ -16,6 +16,7 @@
 
 #include "ros/ros.h"
 #include "sensor_msgs/Image.h"
+#include "flir_lepton_hardware_interface/flirLeptonMsg.h"
 
 namespace flir_lepton_hardware_interface
 {
@@ -97,6 +98,11 @@ namespace flir_lepton_hardware_interface
           const std::vector<uint16_t>& thermal_signals, sensor_msgs::Image* thermalImage,
           uint16_t minValue, uint16_t maxValue);
 
+
+      void createFlirMsg(
+          const std::vector<uint16_t>& thermal_signals,
+          flir_lepton_hardware_interface::flirLeptonMsg* flirMsg,
+          uint16_t minValue, uint16_t maxValue);
 
     private:
       std::string flir_image_topic_;
