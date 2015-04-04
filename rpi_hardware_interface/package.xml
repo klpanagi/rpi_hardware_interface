@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>rpi_hardware_interface</name>
+  <version>0.0.0</version>
+  <description>
+    Contains pandora raspberry(PI2) sources to interface with harware
+  </description>
+  <maintainer email="klpanagi@gmail.com">Konstantinos Panayiotou</maintainer>
+  <license>BSD</license>
+
+  <author>Konstantinos Panayiotou</author>
+  <author>Aggelos Triantafyllidis</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>flir_lepton_hardware_interface</exec_depend>
+
+  <export>
+    <metapackage />
+  </export>
+
+</package>
+
