@@ -25,35 +25,43 @@ interface, we need to provide configurations for ip-forwarding and postrouting.
 ####IP-Fowrwarding configurations
 
 1. Check if IP-Forwarding is enabled on the host PC:
-`sysctl net.ipv4.ip_forward`
+```bash
+sysctl net.ipv4.ip_forward
+```
 
 2. Enable IP-Forwarding on the fly:
-`sysctl -w net.ipv4.ip_forward=1`
+```bash
+sysctl -w net.ipv4.ip_forward=1
+```
 
 This will allow ip forwarding on the curennt shell session. If u want to enable 
 IP-Forwarding permanent, proceed with the following steps.
 
 1. Add the following line in **/etc/sysclt.conf**:
-`net.ipv4.ip_forward = 1`
+```bash
+net.ipv4.ip_forward = 1
+```
 
 2. To enable the changes made in sysctl.conf you will need to run the command:
-`sysctl -p /etc/sysctl.conf`
+```bash
+sysctl -p /etc/sysctl.conf
+```
 
 ####POSTROUTING configurations
 In order to enable NAT in the kernel, run the following commands:
-```
+```bash
 sudo iptables -t nat -A POSTROUTING -o wlan0 -j MASQUERADE
 ```
 
 To make this permanent so you don't have to run the commands after each reboot,
 run the following command:
-```
+```bash
 sudo sh -c "iptables-save > /etc/iptables.ipv4.nat"
 ```
 
 Now edit the file ***/etc/network/interfaces*** and add the following line to 
 the bottom of the file:
-```
+```bash
 up iptables-restore < /etc/iptables.ipv4.nat
 ```
 
@@ -75,6 +83,6 @@ Source the **rpi_ros_network_config.sh** bash script, located in the scripts/ di
 with the host-PC's IP-address on wlan0 interface as input parameter.
 For example, if the host-PC has the IP-address, **192.168.0.117**, for the wlan0 
 interface, then run the following command on the raspberry-PI2 device:
-```
+```bash
 source rpi_ros_network_config 192.168.0.117
 ```
