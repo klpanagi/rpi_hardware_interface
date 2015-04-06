@@ -55,7 +55,7 @@ Now edit the file ***/etc/network/interfaces*** and add the following line to
 the bottom of the file:
 ```
 up iptables-restore < /etc/iptables.ipv4.nat
-
+```
 
 These configurations allows raspberry to also connect to the internet provided 
 by the host-PC's wlan0 interface.
