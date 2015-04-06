@@ -63,7 +63,7 @@ by the host-PC's wlan0 interface.
 ####Configure ROS_MASTER to run on wlan0 interface - Host PC
 Source the **pc_ros_network_config.sh** bash script, located in the scripts/ directory,
 in order to configure the ROS_MASTER_URI and ROS_IP env-variables.
-```
+```bash
 source pc_ros_network_config.sh
 ```
 
