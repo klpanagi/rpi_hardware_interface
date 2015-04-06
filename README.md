@@ -70,7 +70,7 @@ source pc_ros_network_config.sh
 The current script automatically finds the pc's IP address on wlan0 interface
 and applies it to the ROS_MASTER_URI and ROS_IP environmental variables.
 
-####ROS over ethernet configurations on raspberry-PI2 
+###ROS over ethernet configurations on raspberry-PI2 
 Source the **rpi_ros_network_config.sh** bash script, located in the scripts/ directory, 
 with the host-PC's IP-address on wlan0 interface as input parameter.
 For example, if the host-PC has the IP-address, **192.168.0.117**, for the wlan0 
