@@ -1,3 +1,5 @@
+published_topics:
+  flir_image_topic: /flir_raspberry/image
 flir_urdf:
   camera_optical_frame: /flir_optical_frame
 thermal_image:

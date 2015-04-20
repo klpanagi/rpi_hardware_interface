@@ -20,7 +20,8 @@ namespace flir_lepton_hardware_interface
     nh_.param("thermal_image/height", imageHeight_, 60);
     nh_.param("thermal_image/width", imageWidth_, 80);
     openDevice();
-    flir_lepton_image_publisher_ = nh_.advertise<sensor_msgs::Image>("/flir_raspberry/image", 10);
+    nh_.param("published_topics/flir_image_topic", flir_image_topic_, "/flir_raspberry/image");
+    flir_lepton_image_publisher_ = nh_.advertise<sensor_msgs::Image>(flir_image_topic_, 10);
   }
 
 

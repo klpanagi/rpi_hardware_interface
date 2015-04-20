@@ -102,6 +102,7 @@ namespace flir_lepton_hardware_interface
 
 
     private:
+      std::string flir_image_topic_;
       ros::Publisher flir_lepton_image_publisher_;
       ros::NodeHandle nh_;
 
