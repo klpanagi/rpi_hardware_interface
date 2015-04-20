@@ -36,7 +36,7 @@ class FlirLeptonHardwareInterface
     /*!
      * @brief Default constructor
      */
-    FlirLeptonHardwareInterface(void);
+    FlirLeptonHardwareInterface(const std::string& ns);
 
 
     /*!
