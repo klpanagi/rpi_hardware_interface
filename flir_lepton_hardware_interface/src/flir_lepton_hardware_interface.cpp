@@ -1,21 +1,33 @@
 #include "flir_lepton_hardware_interface/flir_lepton_hardware_interface.h"
 
 
-FlirLeptonHardwareInterface::FlirLeptonHardwareInterface(void):
+FlirLeptonHardwareInterface::FlirLeptonHardwareInterface(const std::string& ns):
+  nh_(ns),
   device_("/dev/spidev0.0"),
-  speed_(24000000),
-  bits_(8),
-  packet_size_(164),
-  mode_(SPI_MODE_3),
-  packets_per_frame_(60)
 {
-  packet_size_uint16_ = packet_size_/2;
-  frame_size_uint16_ = (packet_size_/2)*packets_per_frame_;
-  frame_buffer_ = new uint8_t[packet_size_*packets_per_frame_];
-  imageT_.width = 80;
-  imageT_.height = 60;
+  flirSpi_.configFlirSpi(nh_);
+  frame_buffer_ = flirSpi_.makeFrameBuffer();
+  flir_lepton_image_publisher_ = nh_.advertise<sensor_msgs::Image>("/flir_raspberry/image", 10);
   openDevice();
-  flir_lepton_image_publisher_ = nh_.advertise<std_msgs::UInt8MultiArray>("/flir_raspberry/image", 10);
+}
+
+
+void FlirLeptonHardwareInterface::FlirSpi::configFlirSpi(const ros::NodeHandle& nh)
+{
+  mode = SPI_MODE_3
+  nh.param("flir_spi/bits", bits, 8);
+  nh.param("flir_spi/speed", speed, 24000000);
+  nh.param("flir_spi/delay", delay, 0);
+  nh.param("flir_spi/packet_size", packet_size, 164);
+  nh.param("flir_spi/packets_per_frame", packets_per_frame, 60);
+  packet_size_uint16 = packet_size / 2;
+  frame_size_uint16 = packet_size_uint16 * packets_per_frame;
+}
+
+
+int8_t* FlirLeptonHardwareInterface::FlirSpi::makeFrameBuffer(void)
+{
+  return new uint8_t[packet_size * packets_per_frame];
 }
 
 
@@ -32,10 +44,10 @@ void FlirLeptonHardwareInterface::readFrame(void)
   int packet_number = -1;
   int resets = 0;
 
-  for(uint16_t i=0;i<packets_per_frame_;i++)
+  for(uint16_t i = 0; i < flirSpi_.packets_per_frame; i++)
   {
     // flir sends discard packets that we need to resolve
-    read(spiDevice_, &frame_buffer_[packet_size_*i], 
+    read(spiDevice_, &frame_buffer_[packet_size_*i],
       sizeof(uint8_t)*packet_size_);
     packet_number = frame_buffer_[i*packet_size_+1];
     if(packet_number != i)
@@ -105,7 +117,7 @@ void FlirLeptonHardwareInterface::processFrame(void)
   {
     //Discard the first 4 bytes. it is the header.
     if(i%packet_size_uint16_ < 2) continue;
-    
+
     temp = frame_buffer_[i*2];
     frame_buffer_[i*2] = frame_buffer_[i*2+1];
     frame_buffer_[i*2+1] = temp;
@@ -132,7 +144,7 @@ void FlirLeptonHardwareInterface::processFrame(void)
 
 void FlirLeptonHardwareInterface::createMsg(void)
 {
-  
+
 }
 
 
