@@ -54,7 +54,7 @@ class FlirLeptonHardwareInterface
      * @brief Converts a signal value to an actual image value by using
      *  a linear interpolation method.
      */
-    static uint16_t signalToImageValue(uint16_t signalValue, uint16_t minVal,
+    uint8_t signalToImageValue(uint16_t signalValue, uint16_t minVal,
       uint16_t maxVal);
 
 
@@ -73,29 +73,39 @@ class FlirLeptonHardwareInterface
     /*!
      * @brief Reads a frame from flir lepton thermal camera
      */
-    void readFrame(void);
+    void readFrame(uint8_t** frame_buffer);
 
 
     /*!
      * @brief Exports thermal signal values from an obtained VoSPI frame
      */
-    void processFrame(void);
+    void processFrame(
+      uint8_t* frame_buffer, std::vector<uint16_t>* thermal_signals
+      uint16_t* minValue, uint16_t* maxValue);
 
     /*!
      * @brief Currently unavailable
      * @TODO -- implement it!!!!!
      */
-    void createMsg();
+    void createMsg(
+        const std::vector<uint16_t>& thermal_signals, sensor_msgs::Image* thermalImage
+        uint16_t minValue, uint16_t maxValue);
 
 
   private:
     ros::Publisher flir_lepton_image_publisher_;
     ros::NodeHandle nh_;
+
     std::string device_;
     int spiDevice_;
     int statusValue_;
     FlirSpi flirSpi_;
+
     uint8_t* frame_buffer_;
     std::vector<uint16_t> thermal_signals_;
-    sensor_msgs::Image thermalImage_;
+
+    ros::Time now_;
+    std::string frame_id_;
+    uint16_t imageHeight_;
+    uint16_t imageWidth_;
 };
