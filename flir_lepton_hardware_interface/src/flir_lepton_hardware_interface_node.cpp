@@ -1,5 +1,8 @@
 #include "ros/ros.h"
+
 #include "flir_lepton_hardware_interface/flir_lepton_hardware_interface.h"
+
+using namespace flir_lepton_hardware_interface;
 
 int main(int argc, char** argv)
 {
