@@ -89,7 +89,7 @@ namespace flir_lepton_hardware_interface
       * @brief Exports thermal signal values from an obtained VoSPI frame
       */
       void processFrame(
-        uint8_t* frame_buffer, std::vector<uint16_t>* thermal_signals
+        uint8_t* frame_buffer, std::vector<uint16_t>* thermal_signals,
         uint16_t* minValue, uint16_t* maxValue);
 
       /*!
@@ -97,7 +97,7 @@ namespace flir_lepton_hardware_interface
       * @TODO -- implement it!!!!!
       */
       void createMsg(
-          const std::vector<uint16_t>& thermal_signals, sensor_msgs::Image* thermalImage
+          const std::vector<uint16_t>& thermal_signals, sensor_msgs::Image* thermalImage,
           uint16_t minValue, uint16_t maxValue);
 
 

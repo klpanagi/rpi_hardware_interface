@@ -9,8 +9,8 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "flir_lepton_hardware_interface_node");
   FlirLeptonHardwareInterface flirLepron("/flir_lepton_hardware_interface");
 
-  unsigned int rate;
-  ros::NodeHandle("/flir_lepton_hardware_interface").param(
+  int rate;
+  ros::NodeHandle("/flir_lepton_hardware_interface").param<int>(
       "interface_rate", rate, 27);
   ros::Rate loop_rate(rate);
 

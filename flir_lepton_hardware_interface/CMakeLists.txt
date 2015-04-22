@@ -30,7 +30,7 @@ include_directories(
 add_library(${PROJECT_NAME}_lib
   src/flir_lepton_hardware_interface.cpp
   )
-target_link_libraries(flir_lepton_hardware_interface_node
+target_link_libraries(${PROJECT_NAME}_lib
   ${catkin_LIBRARIES}
   )
 
@@ -41,7 +41,7 @@ target_link_libraries(flir_lepton_hardware_interface_node
 add_executable(${PROJECT_NAME}_node
   src/flir_lepton_hardware_interface_node.cpp
   )
-target_link_libraries(flir_lepton_hardware_interface_node
+target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
   ${PROJECT_NAME}_lib
   )
