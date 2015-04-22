@@ -1,0 +1,14 @@
+published_topics:
+  flir_image_topic: /flir_raspberry/image
+flir_urdf:
+  camera_optical_frame: /flir_optical_frame
+thermal_image:
+  height: 60
+  width: 80
+flir_spi:
+  bits: 8
+  speed: 24000000
+  delay: 0
+  packet_size: 164
+  packets_per_frame: 60
+interface_rate: 27
