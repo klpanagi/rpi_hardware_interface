@@ -39,13 +39,13 @@ namespace flir_lepton_hardware_interface
   {
     int param;
     mode = SPI_MODE_3;
-    nh.param<int32_t>("flir_spi/bits", param, 32);
+    nh.param<int32_t>("flir_spi/bits", param, 8);
     bits = param;
     nh.param<int32_t>("flir_spi/speed", param, 24000000);
     speed = param;
     nh.param<int32_t>("flir_spi/delay", param, 0);
     delay = param;
-    nh.param<int32_t>("flir_spi/packet_size", param, 324);
+    nh.param<int32_t>("flir_spi/packet_size", param, 164);
     packet_size = param;
     nh.param<int32_t>("flir_spi/packets_per_frame", param, 60);
     packets_per_frame = param;
