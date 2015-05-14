@@ -244,31 +244,4 @@ namespace flir_lepton_hardware_interface
     ROS_WARN("[Flir-Lepton]: Closed SPI Port");
   }
 
-
-  void save_pgm_file(uint16_t maxval, uint16_t minval,
-      float scale, const std::vector<uint16_t>& lepton_image)
-  {
-    FILE *f = fopen("/home/pandora/image.pgm", "w");
-    if (f == NULL)
-    {
-      printf("Error opening file!\n");
-      exit(1);
-    }
-
-    printf("maxval = %u\n", maxval);
-    printf("minval = %u\n", minval);
-    printf("scale = %f\n", scale);
-
-    fprintf(f,"P2\n80 60\n%u\n", maxval-minval);
-    for (int i = 0; i < lepton_image.size(); i++)
-    {
-        //Discard the first 4 bytes. it is the header.
-        //std::cout << lepton_image[i] << " ";
-        fprintf(f,"%d ", (lepton_image.at(i) - minval));
-    }
-    fprintf(f,"\n\n");
-
-    fclose(f);
-  }
-
 }  // namespace flir_lepton_hardware_interface

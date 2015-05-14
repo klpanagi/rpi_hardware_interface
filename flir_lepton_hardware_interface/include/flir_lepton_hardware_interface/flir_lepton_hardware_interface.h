@@ -19,9 +19,6 @@
 
 namespace flir_lepton_hardware_interface
 {
-  void save_pgm_file(int maxval, int minval,
-      float scale, const std::vector<uint16_t>& lepton_image);
-
   class FlirLeptonHardwareInterface
   {
     private:
