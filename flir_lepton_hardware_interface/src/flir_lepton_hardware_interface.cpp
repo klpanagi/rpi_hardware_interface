@@ -7,6 +7,9 @@
 
 #include "flir_lepton_hardware_interface/flir_lepton_hardware_interface.h"
 
+#define MIN_VALUE 7900
+#define MAX_VALUE 8500
+
 namespace flir_lepton_hardware_interface
 {
 
@@ -22,6 +25,8 @@ namespace flir_lepton_hardware_interface
     imageHeight_ = param;
     nh_.param<int32_t>("thermal_image/width", param, 80);
     imageWidth_ = param;
+    ROS_INFO("Min value: %d", MIN_VALUE);
+    ROS_INFO("Max value: %d", MAX_VALUE);
     openDevice();
     nh_.param<std::string>("published_topics/flir_image_topic", flir_image_topic_, "/flir_raspberry/image");
     flir_lepton_image_publisher_ = nh_.advertise<sensor_msgs::Image>(flir_image_topic_, 10);
@@ -67,6 +72,11 @@ namespace flir_lepton_hardware_interface
     thermal_signals_.clear();
     uint16_t minValue, maxValue;
     processFrame(frame_buffer_, &thermal_signals_, &minValue, &maxValue);
+
+    minValue = MIN_VALUE;  //Added by Taras
+    maxValue = MAX_VALUE;  //Added by Taras
+    
+
     sensor_msgs::Image thermalImage;
     createMsg(thermal_signals_, &thermalImage, minValue, maxValue);
     flir_lepton_image_publisher_.publish(thermalImage);
