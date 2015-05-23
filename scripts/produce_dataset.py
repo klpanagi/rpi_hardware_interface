@@ -9,10 +9,10 @@ y1 = 18
 y2 = 20
 
 # The area of neutral pixels to find the mean temperature
-x1 = 66
-x2 = 68
-y1 = 6
-y2 = 8
+x3 = 66
+x4 = 68
+y3 = 6
+y4 = 8
 
 # Make the dataset text for 0,5 meters.
 try:
@@ -58,8 +58,8 @@ for i in range(20,51):
                average = average + int(temp[a])
 
         # Find in the other array whats going on in pixel values
-        for x in range(x1,x2):
-            for y in range(y1,y2):
+        for x in range(x3,x4):
+            for y in range(y3,y4):
                 b = y * 80 + x
                 av = av + int(temp[b])
 
@@ -89,7 +89,6 @@ for i in range(20,51):
     degree = str(i) + "\n"
     raw = str(average) + "\n"
 
-    # DO INTERPOLATION !!!!
     dataset.write(raw)
     dataset.write(degree)
 

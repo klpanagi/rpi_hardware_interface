@@ -7,8 +7,9 @@
 #include "flir_lepton_hardware_interface/flirLeptonMsg.h"
 
 #include "flir_lepton_hardware_interface/flir_lepton_hardware_interface.h"
+#include <std_msgs/Float32MultiArray.h>
 
-#define MIN_VALUE 7500
+#define MIN_VALUE 7800
 #define MAX_VALUE 8600
 
 namespace flir_lepton_hardware_interface
@@ -19,6 +20,10 @@ namespace flir_lepton_hardware_interface
     device_("/dev/spidev0.0")
   {
     int param;
+    // Fill the data map
+    dataMap_ = fillCalibrationMap();
+    flir_msg_topic_ = "flir/msg";
+
     flirSpi_.configFlirSpi(nh_);
     frame_buffer_ = flirSpi_.makeFrameBuffer();
     nh_.param<std::string>("flir_urdf/camera_optical_frame", frame_id_, "/flir_optical_frame");
@@ -31,6 +36,10 @@ namespace flir_lepton_hardware_interface
     openDevice();
     nh_.param<std::string>("published_topics/flir_image_topic", flir_image_topic_, "/flir_raspberry/image");
     flir_lepton_image_publisher_ = nh_.advertise<sensor_msgs::Image>(flir_image_topic_, 10);
+
+    //flir_lepton_msg_publisher_ = nh_.advertise<flir_lepton_hardware_interface::flirLeptonMsg>(flir_msg_topic_, 10);
+
+    flir_lepton_msg_publisher_ = nh_.advertise<std_msgs::Float32MultiArray>(flir_msg_topic_, 10);
   }
 
 
@@ -74,15 +83,26 @@ namespace flir_lepton_hardware_interface
     uint16_t minValue, maxValue;
     processFrame(frame_buffer_, &thermal_signals_, &minValue, &maxValue);
 
-    minValue = MIN_VALUE;  //Added by Taras
-    maxValue = MAX_VALUE;  //Added by Taras
+    //minValue = MIN_VALUE;  //Added by Taras
+    //maxValue = MAX_VALUE;  //Added by Taras
     
-
+    // Sensor_msgs/Image
     sensor_msgs::Image thermalImage;
+
+    // Custom message
     flir_lepton_hardware_interface::flirLeptonMsg flirMsg;
+
+    // Create the Image message
     createMsg(thermal_signals_, &thermalImage, minValue, maxValue);
+
+    // Create the custom message
     createFlirMsg(thermal_signals_, &flirMsg, minValue, maxValue);
+
     flir_lepton_image_publisher_.publish(thermalImage);
+
+    //flir_lepton_msg_publisher_.publish(flirMsg);    
+
+    flir_lepton_msg_publisher_.publish(flirMsg.temperatures);    
   }
 
 
@@ -105,7 +125,7 @@ namespace flir_lepton_hardware_interface
         // sleep for 1ms
         ros::Duration(0.001).sleep();
 
-        if (resets == 750) //Reach 750 sometimes
+        if (resets == 2000) //Reach 750 sometimes
         {
           ROS_ERROR("[Flir-Lepton]: Error --> resets numbered at [%d]", resets);
           closeDevice();
@@ -183,7 +203,128 @@ namespace flir_lepton_hardware_interface
     flir_lepton_hardware_interface::flirLeptonMsg* flirMsg, 
     uint16_t minValue, uint16_t maxValue)
   {
+    // Thermal sensor_msgs/Image 
+    for (int i = 0; i < imageHeight_; i++) {
+      for (int j = 0; j < imageWidth_; j++) {
+        uint8_t value = signalToImageValue(thermal_signals.at(i * imageWidth_ + j),
+          minValue, maxValue);
+        flirMsg->thermalImage.data.push_back(value);
+      }
+    }
+  
+    // Vector containing the temperatures in image after calibration and vector
+    // with signal raw values 
+    for (int i = 0; i < imageHeight_; i++) {
+      for (int j = 0; j < imageWidth_; j++) {
+        flirMsg->rawValues.data.push_back(thermal_signals.at(i * imageWidth_ + j));
+
+        float value = signalToTemperature(thermal_signals.at(i * imageWidth_ + j));
+        flirMsg->temperatures.data.push_back(value);
+       
+      }
+    }
+    flirMsg->temperatures.layout.dim.push_back(std_msgs::MultiArrayDimension());
+    flirMsg->temperatures.layout.dim[0].size = 60;
+
+    flirMsg->temperatures.layout.dim.push_back(std_msgs::MultiArrayDimension());
+    flirMsg->temperatures.layout.dim[1].size = 80;
+  }
+
+  float FlirLeptonHardwareInterface::signalToTemperature(uint16_t signalValue)
+  {
+    // The input signalValue is the keyword of the map with temperatures
+    std::map<uint16_t, float>::iterator search = dataMap_.find(signalValue);
+    float give_temp;
+
+    if(search != dataMap_.end())
+    {
+      // Pass the value from the map
+      give_temp = search->second;
+    }
+    else
+    {
+      //ROS_ERROR("DIDNT FIND THAT KEYWORD IN DATASET");
+      give_temp = 0;
+    }
     
+    return give_temp;    
+    //-------------------- Temp solution till dataset interpolation--------//
+    //std::map<uint16_t, float>::iterator search;
+    //uint16_t key;
+    //for(search = dataMap_.begin(); search !=dataMap_.end(); search++)
+    //{
+      //if(search->first < signalValue)
+      //{
+        //key = search->first;
+      //}
+    //}
+    //return dataMap_[key];
+  }
+
+  std::map<uint16_t, float> FlirLeptonHardwareInterface::fillCalibrationMap(void)
+  {
+    std::ifstream file("/home/ubuntu/rpi_ws/src/rpi_hardware_interface/flir_lepton_hardware_interface/scripts/flir_thermal_interpolation/dataset_spline_interp.pandora");
+    std::string line;
+    
+    std::map<uint16_t, float> dataMap;
+
+    // Value to be stored in map and its name in the file that we read
+    float value = 0;
+    uint16_t keyword = 0;
+    std::string value_s;
+    std::string keyword_s;
+    std::istringstream ss;
+
+    // If counter even -> read keyword of map from file
+    // If counter odd -> read value of map from file
+    int counter =2;
+    
+    if(file.is_open())
+    {
+      while(getline(file, line))
+      {
+        if(counter % 2 == 0)
+        { 
+          // Read the keyword of map and convert it to uint16_t
+          keyword_s = line;
+          
+          std::istringstream ss(keyword_s);
+          ss >> keyword;
+
+         if(ss.fail())
+         {
+           ROS_ERROR_STREAM("UNABLE TO READ VALUE AT LINE" << counter);
+           exit(1);
+         }
+        }
+        else
+        {
+          value_s = line;
+
+          // Convert string to float for map
+          std::istringstream ss(value_s);
+          ss >> value;
+         
+         if(ss.fail())
+         {
+           ROS_ERROR_STREAM("UNABLE TO READ VALUE AT LINE" << counter - 1);
+           exit(1);
+         }
+         // Fill the map with the next pair
+         dataMap[keyword] = value;
+        }
+        counter++;
+      }
+      file.close();
+    }
+    else
+    {
+      ROS_ERROR("UNABLE TO OPEN FILE");
+    }
+    // Check if map size is ok
+    ROS_INFO_STREAM("MAP SIZE =" << dataMap.size());
+   
+    return dataMap;
   }
 
   uint8_t FlirLeptonHardwareInterface::signalToImageValue(uint16_t signal,

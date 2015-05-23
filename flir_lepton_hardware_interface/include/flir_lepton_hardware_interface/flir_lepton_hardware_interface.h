@@ -6,6 +6,9 @@
 #include <stdint.h>
 #include <cstring>
 #include <limits.h>
+#include <map>
+#include <sstream>
+#include <fstream>
 
 #include <getopt.h>
 #include <fcntl.h>
@@ -64,6 +67,7 @@ namespace flir_lepton_hardware_interface
       uint8_t signalToImageValue(uint16_t signalValue, uint16_t minVal,
         uint16_t maxVal);
 
+      float signalToTemperature(uint16_t signalValue);
 
     private:
       /*!
@@ -104,10 +108,18 @@ namespace flir_lepton_hardware_interface
           flir_lepton_hardware_interface::flirLeptonMsg* flirMsg,
           uint16_t minValue, uint16_t maxValue);
 
+      /*!
+      * @brief Fill an std::map that contains the calibration dataset
+      */
+      std::map<uint16_t, float> fillCalibrationMap(void);
+
     private:
       std::string flir_image_topic_;
       ros::Publisher flir_lepton_image_publisher_;
       ros::NodeHandle nh_;
+
+      ros::Publisher flir_lepton_msg_publisher_;
+      std::string flir_msg_topic_;
 
       std::string device_;
       int spiDevice_;
@@ -121,6 +133,8 @@ namespace flir_lepton_hardware_interface
       std::string frame_id_;
       uint16_t imageHeight_;
       uint16_t imageWidth_;
+
+      std::map<uint16_t, float> dataMap_;
   };
 }  // namespace flir_lepton_hardware_interface
 
