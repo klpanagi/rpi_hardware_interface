@@ -243,27 +243,27 @@ namespace flir_lepton_hardware_interface
     }
     else
     {
-      //ROS_ERROR("DIDNT FIND THAT KEYWORD IN DATASET");
       give_temp = 0;
     }
     
     return give_temp;    
-    //-------------------- Temp solution till dataset interpolation--------//
-    //std::map<uint16_t, float>::iterator search;
-    //uint16_t key;
-    //for(search = dataMap_.begin(); search !=dataMap_.end(); search++)
-    //{
-      //if(search->first < signalValue)
-      //{
-        //key = search->first;
-      //}
-    //}
-    //return dataMap_[key];
   }
 
+
+  /*!
+   * @brief Loads the temperature-raw_signal_values relation from the dataset 
+   *  file.
+   *  @return A map which containes temperature-signal indexes
+   */
   std::map<uint16_t, float> FlirLeptonHardwareInterface::fillCalibrationMap(void)
   {
-    std::ifstream file("/home/ubuntu/rpi_ws/src/rpi_hardware_interface/flir_lepton_hardware_interface/scripts/flir_thermal_interpolation/dataset_spline_interp.pandora");
+    char* dataset_uri = new char[128];
+    std::string param;
+    /* ---< Load dataset >--- */
+    nh_.getParam("dataset/spline_interpolated_data", param);
+    strcpy(dataset_uri, param.c_str());
+    /* ---< Open a file input stream to read the dataset >--- */
+    std::ifstream file(dataset_uri);
     std::string line;
     
     std::map<uint16_t, float> dataMap;
@@ -293,7 +293,7 @@ namespace flir_lepton_hardware_interface
 
          if(ss.fail())
          {
-           ROS_ERROR_STREAM("UNABLE TO READ VALUE AT LINE" << counter);
+           ROS_ERROR("Failed to read thermal-signal dataset");
            exit(1);
          }
         }
@@ -304,14 +304,14 @@ namespace flir_lepton_hardware_interface
           // Convert string to float for map
           std::istringstream ss(value_s);
           ss >> value;
-         
-         if(ss.fail())
-         {
-           ROS_ERROR_STREAM("UNABLE TO READ VALUE AT LINE" << counter - 1);
-           exit(1);
-         }
-         // Fill the map with the next pair
-         dataMap[keyword] = value;
+
+          if(ss.fail())
+          {
+            ROS_ERROR("Failed to read thermal-signal dataset");
+            exit(1);
+          }
+          // Fill the map with the next pair
+          dataMap[keyword] = value;
         }
         counter++;
       }
@@ -319,14 +319,22 @@ namespace flir_lepton_hardware_interface
     }
     else
     {
-      ROS_ERROR("UNABLE TO OPEN FILE");
+      ROS_ERROR("Failed to open file");
+      exit(1);
     }
     // Check if map size is ok
-    ROS_INFO_STREAM("MAP SIZE =" << dataMap.size());
-   
+    //ROS_INFO_STREAM("MAP SIZE =" << dataMap.size());
     return dataMap;
   }
 
+
+  /*!
+   * @brief Converts signal values to raw_image values.
+   * @param signal signal value
+   * @param minVal Minimun signal value captured on a thermal image frame.
+   * @param maxVal Maximum signal value captured on a thermal image frame.
+   * @return raw_image value.
+   */
   uint8_t FlirLeptonHardwareInterface::signalToImageValue(uint16_t signal,
     uint16_t minVal, uint16_t maxVal)
   {
