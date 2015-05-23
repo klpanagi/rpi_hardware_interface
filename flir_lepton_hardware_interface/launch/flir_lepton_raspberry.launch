@@ -1,9 +1,19 @@
 <launch>
 
   <!--  Alert Handler  -->
-  <node type="flir_lepton_hardware_interface_node" name="flir_lepton_hardware_interface"
-      pkg="flir_lepton_hardware_interface" respawn="true" output="screen" ns="rpi_hardware_interface" />
-  <rosparam file="$(find flir_lepton_hardware_interface)/config/flir_lepton_hardware_interface/params.yaml"
-    command="load" ns="rpi_hardware_interface/flir_lepton_hardware_interface" />
+  <node 
+    type="flir_lepton_hardware_interface_node" 
+    name="flir_lepton_hardware_interface"
+    pkg="flir_lepton_hardware_interface" 
+    respawn="true" 
+    output="screen" 
+    ns="flir_lepton_hardware_interface" 
+  />
+
+  <rosparam 
+    file="$(find flir_lepton_hardware_interface)/config/params.yaml"
+    command="load" 
+    ns="flir_lepton_hardware_interface" 
+  />
 
 </launch>
