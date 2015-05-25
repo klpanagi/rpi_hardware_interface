@@ -7,7 +7,6 @@
     pkg="flir_lepton_hardware_interface" 
     respawn="true" 
     output="screen" 
-    ns="flir_lepton_hardware_interface" 
   />
 
   <rosparam 
