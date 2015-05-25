@@ -259,8 +259,12 @@ namespace flir_lepton_hardware_interface
   {
     char* dataset_uri = new char[128];
     std::string param;
-    /* ---< Load dataset >--- */
+
+    /* ---< Load dataset file from parameter server >--- */
     nh_.getParam("dataset/spline_interpolated_data", param);
+    //nh_.param<std::string>("dataset/spline_interpolated_data", param, 
+      //"/home/pandora/rpi_ws/src/rpi_hardware_interface/data/flir_lepton/dataset_spline_interp.pandora");
+
     strcpy(dataset_uri, param.c_str());
     /* ---< Open a file input stream to read the dataset >--- */
     std::ifstream file(dataset_uri);
