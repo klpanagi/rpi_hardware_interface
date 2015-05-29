@@ -4,15 +4,15 @@
 #include <vector>
 
 #include "sensor_msgs/Image.h"
-#include "flir_lepton_hardware_interface/flirLeptonMsg.h"
+#include "flir_lepton/flirLeptonMsg.h"
 
-#include "flir_lepton_hardware_interface/flir_lepton_hardware_interface.h"
+#include "flir_lepton/flir_lepton.h"
 #include <std_msgs/Float32MultiArray.h>
 
 #define MIN_VALUE 7800
 #define MAX_VALUE 8600
 
-namespace flir_lepton_hardware_interface
+namespace flir_lepton
 {
 
   FlirLeptonHardwareInterface::FlirLeptonHardwareInterface(const std::string& ns):
@@ -22,7 +22,7 @@ namespace flir_lepton_hardware_interface
     int param;
     // Fill the data map
     dataMap_ = fillCalibrationMap();
-    flir_msg_topic_ = "flir/msg";
+    flir_msg_topic_ = "fused_msg";
 
     flirSpi_.configFlirSpi(nh_);
     frame_buffer_ = flirSpi_.makeFrameBuffer();
@@ -90,13 +90,13 @@ namespace flir_lepton_hardware_interface
     sensor_msgs::Image thermalImage;
 
     // Custom message
-    flir_lepton_hardware_interface::flirLeptonMsg flirMsg;
+    flir_lepton::flirLeptonMsg flirMsg;
 
     // Create the Image message
-    createMsg(thermal_signals_, &thermalImage, minValue, maxValue);
+    fill_ImageMsg(thermal_signals_, &thermalImage, minValue, maxValue);
 
     // Create the custom message
-    createFlirMsg(thermal_signals_, &flirMsg, minValue, maxValue);
+    fill_fusedMsg(thermal_signals_, &flirMsg, minValue, maxValue);
 
     flir_lepton_image_publisher_.publish(thermalImage);
 
@@ -175,7 +175,7 @@ namespace flir_lepton_hardware_interface
    * packages are sent from the spi interface. Right now thermalImage's data is
    * being filled in a column major way.
    */
-  void FlirLeptonHardwareInterface::createMsg(
+  void FlirLeptonHardwareInterface::fill_ImageMsg(
       const std::vector<uint16_t>& thermal_signals, sensor_msgs::Image* thermalImage,
       uint16_t minValue, uint16_t maxValue)
   {
@@ -198,11 +198,14 @@ namespace flir_lepton_hardware_interface
     }
   }
 
-  void FlirLeptonHardwareInterface::createFlirMsg(
+  void FlirLeptonHardwareInterface::fill_fusedMsg(
     const std::vector<uint16_t>& thermal_signals, 
-    flir_lepton_hardware_interface::flirLeptonMsg* flirMsg, 
+    flir_lepton::flirLeptonMsg* flirMsg, 
     uint16_t minValue, uint16_t maxValue)
   {
+    flirMsg->header.stamp = now_;
+    flirMsg->header.frame_id = frame_id_;
+
     // Thermal sensor_msgs/Image 
     for (int i = 0; i < imageHeight_; i++) {
       for (int j = 0; j < imageWidth_; j++) {
@@ -417,4 +420,4 @@ namespace flir_lepton_hardware_interface
     ROS_WARN("[Flir-Lepton]: Closed SPI Port");
   }
 
-}  // namespace flir_lepton_hardware_interface
+}  // namespace flir_lepton

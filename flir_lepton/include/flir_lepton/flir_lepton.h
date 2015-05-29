@@ -1,5 +1,5 @@
-#ifndef FLIR_LEPTON_HARDWARE_INTERFACE_FLIR_LEPTON_HARDWARE_INTERFACE_H
-#define FLIR_LEPTON_HARDWARE_INTERFACE_FLIR_LEPTON_HARDWARE_INTERFACE_H
+#ifndef FLIR_LEPTON_FLIR_LEPTON_H
+#define FLIR_LEPTON_FLIR_LEPTON_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,9 +19,9 @@
 
 #include "ros/ros.h"
 #include "sensor_msgs/Image.h"
-#include "flir_lepton_hardware_interface/flirLeptonMsg.h"
+#include "flir_lepton/flirLeptonMsg.h"
 
-namespace flir_lepton_hardware_interface
+namespace flir_lepton
 {
   class FlirLeptonHardwareInterface
   {
@@ -98,14 +98,14 @@ namespace flir_lepton_hardware_interface
       * @brief Currently unavailable
       * @TODO -- implement it!!!!!
       */
-      void createMsg(
+      void fill_ImageMsg(
           const std::vector<uint16_t>& thermal_signals, sensor_msgs::Image* thermalImage,
           uint16_t minValue, uint16_t maxValue);
 
 
-      void createFlirMsg(
+      void fill_fusedMsg(
           const std::vector<uint16_t>& thermal_signals,
-          flir_lepton_hardware_interface::flirLeptonMsg* flirMsg,
+          flir_lepton::flirLeptonMsg* flirMsg,
           uint16_t minValue, uint16_t maxValue);
 
       /*!
@@ -136,6 +136,6 @@ namespace flir_lepton_hardware_interface
 
       std::map<uint16_t, float> dataMap_;
   };
-}  // namespace flir_lepton_hardware_interface
+}  // namespace flir_lepton
 
-#endif  // FLIR_LEPTON_HARDWARE_INTERFACE_FLIR_LEPTON_HARDWARE_INTERFACE_H
+#endif  // FLIR_LEPTON_FLIR_LEPTON_H

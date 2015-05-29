@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(flir_lepton_hardware_interface)
+project(flir_lepton)
 
 find_package(catkin REQUIRED COMPONENTS
   message_generation
@@ -42,7 +42,7 @@ include_directories(
 ################################################################################
 
 add_library(${PROJECT_NAME}_lib
-  src/flir_lepton_hardware_interface.cpp
+  src/flir_lepton.cpp
   )
 target_link_libraries(${PROJECT_NAME}_lib
   ${catkin_LIBRARIES}
@@ -53,7 +53,7 @@ target_link_libraries(${PROJECT_NAME}_lib
 ################################################################################
 
 add_executable(${PROJECT_NAME}_node
-  src/flir_lepton_hardware_interface_node.cpp
+  src/flir_lepton_node.cpp
   )
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}

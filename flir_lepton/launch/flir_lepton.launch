@@ -1,0 +1,18 @@
+<launch>
+
+  <!--  Alert Handler  -->
+  <node 
+    type="flir_lepton_node" 
+    name="flir_lepton"
+    pkg="flir_lepton" 
+    respawn="true" 
+    output="screen" 
+  />
+
+  <rosparam 
+    file="$(find flir_lepton)/config/params.yaml"
+    command="load" 
+    ns="flir_lepton" 
+  />
+
+</launch>

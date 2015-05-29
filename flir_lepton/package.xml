@@ -1,7 +1,7 @@
 <package format="2">
-  <name>flir_lepton_hardware_interface</name>
+  <name>flir_lepton</name>
   <version>0.0.0</version>
-  <description>The flir_lepton_hardware_interface package</description>
+  <description>The flir_lepton package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
