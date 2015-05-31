@@ -9,14 +9,12 @@ from pi_camera import pi_camera_interface
 
 
 class PiCamera:
+    # Default constructor
     def __init__(self):
         self.piCamera_ = pi_camera_interface.PiCameraInterface()
-        #pub = rospy.Publisher('picamera', String, queue_size=100)
         self.image_pub_ = rospy.Publisher('picamera/image', Image, queue_size=100)
-        #hello_str = "Hello i am picamera: [%s]" % rospy.get_time()
-        #rospy.loginfo(hello_str)
-        #pub.publish(hello_str)
         
+    # Handles publishing image frames
     def run(self):
         #self.piCamera_.capture_sequence_toStream()
         image = self.piCamera_.get_image_from_stream()
@@ -29,7 +27,7 @@ class PiCamera:
         msg.data = image
         self.image_pub_.publish(msg)
 
-
+    # Default destructor
     def __del__(self):
         self.piCamera_.closeDevice()
         del self.piCamera_
@@ -39,11 +37,10 @@ class PiCamera:
 def main():
     piCamera = PiCamera()
     rospy.init_node('picamera', anonymous=False)
-    rate = rospy.Rate(30) # 10Hz
+    rate = rospy.Rate(40) # 10Hz
     while not rospy.is_shutdown():
         rate.sleep()
         piCamera.run()
-
 
 
 
