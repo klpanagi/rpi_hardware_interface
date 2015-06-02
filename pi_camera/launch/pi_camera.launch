@@ -1,0 +1,13 @@
+<launch>
+
+  <!-- PIcamera node -->
+  <node 
+    type="pi_camera_node.py" 
+    name="pi_camera"
+    pkg="pi_camera" 
+    respawn="true" 
+    output="screen" 
+  />
+
+
+</launch>
