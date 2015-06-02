@@ -18,7 +18,7 @@ class PiCamera:
     def run(self):
         #self.piCamera_.capture_sequence_toStream()
         image = self.piCamera_.get_image_from_stream()
-        print len(image)
+        #print len(image)
         msg = Image()
         msg.height = self.piCamera_.res_height_
         msg.width = self.piCamera_.res_width_
@@ -36,8 +36,8 @@ class PiCamera:
 
 def main():
     piCamera = PiCamera()
-    rospy.init_node('picamera', anonymous=False)
-    rate = rospy.Rate(40) # 10Hz
+    rospy.init_node('pi_camera_node', anonymous=False)
+    rate = rospy.Rate(25) # 25Hz
     while not rospy.is_shutdown():
         rate.sleep()
         piCamera.run()
