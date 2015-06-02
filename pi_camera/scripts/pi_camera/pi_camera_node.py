@@ -12,11 +12,14 @@ class PiCamera:
     # Default constructor
     def __init__(self):
         self.piCamera_ = pi_camera_interface.PiCameraInterface()
+        self.piCamera_.start_streaming()
+        rospy.loginfo("[PiCamera]: Streaming initialized")
         self.image_pub_ = rospy.Publisher('picamera/image', Image, queue_size=100)
         
     # Handles publishing image frames
     def run(self):
         #self.piCamera_.capture_sequence_toStream()
+        #rospy.loginfo("[PiCamera]: Capturing a frame")
         image = self.piCamera_.get_image_from_stream()
         #print len(image)
         msg = Image()
@@ -35,8 +38,8 @@ class PiCamera:
 
 
 def main():
-    piCamera = PiCamera()
     rospy.init_node('pi_camera_node', anonymous=False)
+    piCamera = PiCamera()
     rate = rospy.Rate(25) # 25Hz
     while not rospy.is_shutdown():
         rate.sleep()
