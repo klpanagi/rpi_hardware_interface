@@ -205,6 +205,8 @@ namespace flir_lepton
   {
     flirMsg->header.stamp = now_;
     flirMsg->header.frame_id = frame_id_;
+    flirMsg->thermalImage.header.stamp = now_;
+    flirMsg->thermalImage.header.frame_id = frame_id_;
 
     // Thermal sensor_msgs/Image 
     for (int i = 0; i < imageHeight_; i++) {
@@ -355,6 +357,10 @@ namespace flir_lepton
   }
 
 
+  /*!
+   * @brief Opens communication port to flirlepton sensor
+   * @return Void.
+   */
   void FlirLeptonHardwareInterface::openDevice(void)
   {
     spiDevice_ = open(device_.c_str(), O_RDWR);
@@ -408,7 +414,10 @@ namespace flir_lepton
     ROS_WARN("[Flir-Lepton]: Opened SPI Port");
   }
 
-
+  /*!
+   * @brief Closes communication port to flir-lepton sensor
+   * @return Void
+   */
   void FlirLeptonHardwareInterface::closeDevice(void)
   {
     statusValue_ = close(spiDevice_);
