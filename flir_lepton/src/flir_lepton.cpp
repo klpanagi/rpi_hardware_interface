@@ -37,7 +37,7 @@ namespace flir_lepton
     nh_.param<std::string>("published_topics/flir_image_topic", flir_image_topic_, "/flir_raspberry/image");
     flir_lepton_image_publisher_ = nh_.advertise<sensor_msgs::Image>(flir_image_topic_, 10);
 
-    flir_lepton_msg_publisher_ = nh_.advertise<flir_lepton_hardware_interface::flirLeptonMsg>(flir_msg_topic_, 10);
+    flir_lepton_msg_publisher_ = nh_.advertise<flir_lepton::flirLeptonMsg>(flir_msg_topic_, 10);
 
   }
 
