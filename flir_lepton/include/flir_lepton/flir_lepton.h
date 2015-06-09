@@ -19,7 +19,7 @@
 
 #include "ros/ros.h"
 #include "sensor_msgs/Image.h"
-#include "flir_lepton/flirLeptonMsg.h"
+#include "distrib_msgs/flirLeptonMsg.h"
 
 namespace flir_lepton
 {
@@ -105,7 +105,7 @@ namespace flir_lepton
 
       void fill_fusedMsg(
           const std::vector<uint16_t>& thermal_signals,
-          flir_lepton::flirLeptonMsg* flirMsg,
+          distrib_msgs::flirLeptonMsg* flirMsg,
           uint16_t minValue, uint16_t maxValue);
 
       /*!
@@ -114,12 +114,13 @@ namespace flir_lepton
       std::map<uint16_t, float> fillCalibrationMap(void);
 
     private:
-      std::string flir_image_topic_;
-      ros::Publisher flir_lepton_image_publisher_;
+      std::string image_topic_;
+      std::string fusedMsg_topic_;
+
+      ros::Publisher image_publisher_;
+      ros::Publisher fusedMsg_publisher_;
       ros::NodeHandle nh_;
 
-      ros::Publisher flir_lepton_msg_publisher_;
-      std::string flir_msg_topic_;
 
       std::string device_;
       int spiDevice_;

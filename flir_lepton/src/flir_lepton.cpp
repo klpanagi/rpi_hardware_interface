@@ -4,7 +4,8 @@
 #include <vector>
 
 #include "sensor_msgs/Image.h"
-#include "flir_lepton/flirLeptonMsg.h"
+//#include "flir_lepton/flirLeptonMsg.h"
+#include "distrib_msgs/flirLeptonMsg.h"
 
 #include "flir_lepton/flir_lepton.h"
 #include <std_msgs/Float32MultiArray.h>
@@ -22,7 +23,6 @@ namespace flir_lepton
     int param;
     // Fill the data map
     dataMap_ = fillCalibrationMap();
-    flir_msg_topic_ = "fused_msg";
 
     flirSpi_.configFlirSpi(nh_);
     frame_buffer_ = flirSpi_.makeFrameBuffer();
@@ -31,13 +31,14 @@ namespace flir_lepton
     imageHeight_ = param;
     nh_.param<int32_t>("thermal_image/width", param, 80);
     imageWidth_ = param;
-    ROS_INFO("Min value: %d", MIN_VALUE);
-    ROS_INFO("Max value: %d", MAX_VALUE);
+    //ROS_INFO("Min value: %d", MIN_VALUE);
+    //ROS_INFO("Max value: %d", MAX_VALUE);
     openDevice();
-    nh_.param<std::string>("published_topics/flir_image_topic", flir_image_topic_, "/flir_raspberry/image");
-    flir_lepton_image_publisher_ = nh_.advertise<sensor_msgs::Image>(flir_image_topic_, 10);
+    nh_.param<std::string>("published_topics/flir_image_topic", image_topic_, "/rpi2/thermal/image");
+    image_publisher_ = nh_.advertise<sensor_msgs::Image>(image_topic_, 10);
 
-    flir_lepton_msg_publisher_ = nh_.advertise<flir_lepton::flirLeptonMsg>(flir_msg_topic_, 10);
+    nh_.param<std::string>("published_topics/flir_fused_topic", fusedMsg_topic_, "/rpi2/thermal/fused_msg");
+    fusedMsg_publisher_ = nh_.advertise<distrib_msgs::flirLeptonMsg>(fusedMsg_topic_, 10);
 
   }
 
@@ -89,19 +90,19 @@ namespace flir_lepton
     sensor_msgs::Image thermalImage;
 
     // Custom message
-    flir_lepton::flirLeptonMsg flirMsg;
+    distrib_msgs::flirLeptonMsg fusedMsg;
 
     // Create the Image message
     fill_ImageMsg(thermal_signals_, &thermalImage, minValue, maxValue);
 
     // Create the custom message
-    fill_fusedMsg(thermal_signals_, &flirMsg, minValue, maxValue);
+    fill_fusedMsg(thermal_signals_, &fusedMsg, minValue, maxValue);
 
-    flir_lepton_image_publisher_.publish(thermalImage);
+    image_publisher_.publish(thermalImage);
 
-    //flir_lepton_msg_publisher_.publish(flirMsg);    
+    //image_publisher_.publish(flirMsg);    
 
-    flir_lepton_msg_publisher_.publish(flirMsg);    
+    fusedMsg_publisher_.publish(fusedMsg);    
   }
 
 
@@ -199,7 +200,7 @@ namespace flir_lepton
 
   void FlirLeptonHardwareInterface::fill_fusedMsg(
     const std::vector<uint16_t>& thermal_signals, 
-    flir_lepton::flirLeptonMsg* flirMsg, 
+    distrib_msgs::flirLeptonMsg* flirMsg, 
     uint16_t minValue, uint16_t maxValue)
   {
     flirMsg->header.stamp = now_;
