@@ -3,30 +3,15 @@
   <version>0.0.0</version>
   <description>The flir_lepton package</description>
 
-  <!-- One maintainer tag required, multiple allowed, one person per tag --> 
-  <!-- Example:  -->
-  <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="kotch@todo.todo">kotch</maintainer>
+  <maintainer email="klpanagi@gmail.com">Konstantinos Panayiotou</maintainer>
 
-
-  <!-- One license tag required, multiple allowed, one license per tag -->
-  <!-- Commonly used license strings: -->
-  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
   <license>BSD</license>
 
-
-  <!-- Url tags are optional, but mutiple are allowed, one per tag -->
-  <!-- Optional attribute type can be: website, bugtracker, or repository -->
-  <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/flir_lepton_hardware_interface</url> -->
   <url type="bugtracker">https://github.com/klpanagi/rpi_hardware_interface/issues</url>
   <url type="repository">https://github.com/klpanagi/rpi_hardware_interface.git</url>
 
-
-  <!-- Author tags are optional, mutiple are allowed, one per tag -->
-  <!-- Authors do not have to be maintianers, but could be -->
-  <!-- Example: -->
-  <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
+  <author email="klpanagi@gmail.com">Konstantinos Panayiotou</author>
+  <author email="tsirif@gmail.com">Tsirigotis Christos</author>
 
 
   <!-- The *_depend tags are used to specify dependencies -->
