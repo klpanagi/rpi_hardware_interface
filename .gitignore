@@ -54,3 +54,6 @@ Thumbs.db
 .*.swp
 *.log
 core*
+
+# VIM #
+.ropeproject
