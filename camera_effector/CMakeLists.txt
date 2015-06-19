@@ -4,9 +4,12 @@ project(camera_effector)
 find_package(catkin REQUIRED COMPONENTS
   message_generation
   roscpp
+  rospy
   std_msgs
   sensor_msgs
 )
+
+catkin_python_setup()
 
 #add_message_files(
 #  FILES
@@ -21,7 +24,6 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS
     include
-#  LIBRARIES flir_lepton_hardware_interface
   CATKIN_DEPENDS
     message_runtime
     roscpp
@@ -36,10 +38,6 @@ include_directories(
 )
 
 
-################################################################################
-#                      Flir Lepton Hardware Interface Lib                      #
-################################################################################
-
 add_library(${PROJECT_NAME}_lib
   src/camera_effector.cpp
   )
@@ -49,9 +47,6 @@ target_link_libraries(${PROJECT_NAME}_lib
   ${catkin_LIBRARIES}
   )
 
-################################################################################
-#                  Flir Lepton Hardware Interface Executable                   #
-################################################################################
 
 add_executable(${PROJECT_NAME}_node
   src/camera_effector_node.cpp
