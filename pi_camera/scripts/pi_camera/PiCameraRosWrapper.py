@@ -45,7 +45,7 @@ class PiCameraRosWrapper:
         rospy.loginfo("Exposure Speed: [%s]" % self.camera_.exposure_speed)
         rospy.loginfo("Exposure Mode: [%s]" % self.camera_.exposure_mode)
 
-        self.image_pub_ = rospy.Publisher('rpi2/pi_camera/image', Image, queue_size=100)
+        self.image_pub_ = rospy.Publisher('rpi2/pi_camera/image', Image, queue_size=10)
 
         self.image_msg_ = Image()
         self.image_msg_.height = self.res_height_
@@ -101,7 +101,7 @@ class PiCameraRosWrapper:
             endT = timeit.default_timer()
             elapsedT = endT - startT
             startT = endT
-            #print "Elapsed Time: [%s]" % elapsedT
+            #rospy.logwarn("Elapsed Time: [%s]", elapsedT)
 
             frame = rawCapture.getvalue()
             if len(frame) == self.res_height_ * self.res_width_ * 3:
