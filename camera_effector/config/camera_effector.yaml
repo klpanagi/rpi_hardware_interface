@@ -1,0 +1,29 @@
+published_topics:
+  camera_effector_joint_states: /rpi2/camera_effetor/joint_states
+
+pan_joint:
+  joint_name: camera_effector_pan_joint
+  limits:
+    max: 60
+    min: -60
+  offset: 0
+  servo:
+    name: pan
+    pin: 17
+
+tilt_joint:
+  joint_name: camera_effector_tilt_joint
+  limits:
+    max: 60
+    min: -60
+  offset: 34.3775
+  servo:
+    name: tilt
+    pin: 18
+
+camera_effector_urdf:
+  camera_effector_frame: /camera_effector_frame
+
+subscribers:
+  pan_command: /camera_effector/pan_command
+  tilt_command: /camera_effector/tilt_command

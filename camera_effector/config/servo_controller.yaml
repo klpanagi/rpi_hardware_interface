@@ -1,0 +1,7 @@
+servo_params:
+  base_positions:
+    left: 900
+    neutral: 1500
+    right: 2100
+  error_degrees: -9.746
+

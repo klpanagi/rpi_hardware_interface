@@ -1,0 +1,26 @@
+<launch>
+
+  <!-- PIcamera node -->
+  <node 
+    name="camera_effector"
+    pkg="camera_effector" 
+    type="camera_effector_node.py" 
+    output="screen" 
+  />
+
+
+  <!-- Load configuration parameters yaml -->
+  <rosparam 
+    file="$(find camera_effector)/config/camera_effector.yaml"
+    command="load" 
+    ns="camera_effector" 
+  />
+
+  <!-- Load configuration parameters yaml -->
+  <rosparam 
+    file="$(find camera_effector)/config/servo_controller.yaml"
+    command="load" 
+    ns="servo_controller" 
+  />
+
+</launch>
