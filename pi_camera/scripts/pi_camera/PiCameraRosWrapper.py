@@ -111,7 +111,7 @@ class PiCameraRosWrapper:
                 rospy.logerr("[PiCamera]: Wrong frame size [%s]", len(frame))
             
 
-            #rospy.loginfo("Elapsed Time: [%s]", elapsed_time)
+            #rospy.loginfo("Elapsed Time: [%s]", elapsedT)
             rawCapture.truncate(0)
             rawCapture.seek(0)
 

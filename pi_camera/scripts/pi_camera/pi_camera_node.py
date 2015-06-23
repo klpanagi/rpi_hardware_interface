@@ -9,12 +9,15 @@ def main():
     rospy.init_node('pi_camera_node', anonymous=False)
     piCamera = PiCameraRosWrapper()
     #rate = rospy.Rate(10) # 25Hz
-    piCamera.run_continuous()
+    #piCamera.run_continuous()
+    piCamera.run_sequential()
 
 
 
 if __name__ == "__main__":
     try:
-        main()
+      main()
     except:
-      sys.exit(1)
+      e = sys.exc_info()[0]
+      rospy.logfatal(e)
+      #sys.exit(1)
