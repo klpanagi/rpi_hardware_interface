@@ -4,8 +4,8 @@ published_topics:
 pan_joint:
   joint_name: camera_effector_pan_joint
   limits:
-    max: 60
-    min: -60
+    max: 80
+    min: -80
   offset: 0
   servo:
     name: pan
@@ -14,9 +14,9 @@ pan_joint:
 tilt_joint:
   joint_name: camera_effector_tilt_joint
   limits:
-    max: 60
-    min: -60
-  offset: 34.3775
+    max: 50
+    min: -40
+  offset: 38.3775
   servo:
     name: tilt
     pin: 18

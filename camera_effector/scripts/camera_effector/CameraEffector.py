@@ -83,9 +83,9 @@ class CameraEffector:
             '~tilt_joint/offset', 34.3775)
 
         max_pos = rospy.get_param('~tilt_joint/limits/max', 60)
-        max_pos += self.offsets_['tilt'] 
+        #max_pos += self.offsets_['tilt'] 
         min_pos = rospy.get_param('~tilt_joint/limits/min', 60)
-        min_pos += self.offsets_['tilt'] 
+        #min_pos += self.offsets_['tilt'] 
         self.pos_limits_['tilt'] = {'max': max_pos, 'min': min_pos}
 
         max_pos = rospy.get_param('~pan_joint/limits/max', 60)
@@ -162,7 +162,7 @@ class CameraEffector:
     #
     def set_servo_pos(self, servo_id, rad):
         degrees = self.servo_ctrl_.radians_to_degrees(rad)
-        print degrees
+        #print degrees
         min_accept = self.pos_limits_[servo_id]['min'] * \
             self.acceptable_cmd_error_ + self.pos_limits_[servo_id]['min']
         max_accept = self.pos_limits_[servo_id]['max'] * \

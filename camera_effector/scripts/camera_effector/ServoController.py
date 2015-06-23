@@ -133,7 +133,7 @@ class ServoController:
 
         if self.debug_:
           rospy.loginfo( \
-              "Setting servo [%s] position: Pos_Degrees: %s,   Duty_Cycle: %s" \
+              "Setting servo [%s] position (Absolute Values): Pos_Degrees: %s,   Duty_Cycle: %s" \
               %(servo_id, degrees, pulse_width) )
 
         self.gpio_.set_servo_pulsewidth(self.servo_pin_[servo_id], pulse_width)
@@ -154,8 +154,8 @@ class ServoController:
 
 
     def dutyCycle_to_degrees(self, duty_cycle):
-        new_range = [-60, 60]
-        old_range = [900, 2100]
+        new_range = [-90, 90]
+        old_range = [600, 2400]
         degrees = self.linear_conversion(old_range, new_range, duty_cycle)
         return degrees
     # ======================================================================= #
@@ -166,8 +166,8 @@ class ServoController:
     #  @param degrees
     #
     def degrees_to_dutyCycle(self, degrees):
-        old_range = [-60, 60]
-        new_range = [900, 2100]
+        old_range = [-90, 90]
+        new_range = [600, 2400]
         duty_cycle = self.linear_conversion(old_range, new_range, degrees)
         # TODO -- Handle with possible error on conversion
         #print "Duty Cucle: %s" % duty_cycle

@@ -1,7 +1,7 @@
 servo_params:
   base_positions:
-    left: 900
+    left: 600
     neutral: 1500
-    right: 2100
+    right: 2400
   error_degrees: -9.746
 
