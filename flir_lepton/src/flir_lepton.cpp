@@ -1,14 +1,44 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <vector>
-
-#include "sensor_msgs/Image.h"
-//#include "flir_lepton/flirLeptonMsg.h"
-#include "distrib_msgs/flirLeptonMsg.h"
+/*********************************************************************
+ * *
+ * * Software License Agreement (BSD License)
+ * *
+ * *  Copyright (c) 2015, P.A.N.D.O.R.A. Team.
+ * *  All rights reserved.
+ * *
+ * *  Redistribution and use in source and binary forms, with or without
+ * *  modification, are permitted provided that the following conditions
+ * *  are met:
+ * *
+ * *   * Redistributions of source code must retain the above copyright
+ * *     notice, this list of conditions and the following disclaimer.
+ * *   * Redistributions in binary form must reproduce the above
+ * *     copyright notice, this list of conditions and the following
+ * *     disclaimer in the documentation and/or other materials provided
+ * *     with the distribution.
+ * *   * Neither the name of the P.A.N.D.O.R.A. Team nor the names of its
+ * *     contributors may be used to endorse or promote products derived
+ * *     from this software without specific prior written permission.
+ * *
+ * *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * *  POSSIBILITY OF SUCH DAMAGE.
+ * *
+ * * Author: Konstantinos Panayiotou, Aggelos Triantafillidis,
+ * *  Tsirigotis Christos
+ * * Maintainer: Konstantinos Panayiotou
+ * * Email: klpanagi@gmail.com
+ * *********************************************************************/
 
 #include "flir_lepton/flir_lepton.h"
-#include <std_msgs/Float32MultiArray.h>
 
 #define MIN_VALUE 7800
 #define MAX_VALUE 8600
@@ -31,15 +61,12 @@ namespace flir_lepton
     imageHeight_ = param;
     nh_.param<int32_t>("thermal_image/width", param, 80);
     imageWidth_ = param;
-    //ROS_INFO("Min value: %d", MIN_VALUE);
-    //ROS_INFO("Max value: %d", MAX_VALUE);
     openDevice();
     nh_.param<std::string>("published_topics/flir_image_topic", image_topic_, "/rpi2/thermal/image");
-    image_publisher_ = nh_.advertise<sensor_msgs::Image>(image_topic_, 10);
+    image_publisher_ = nh_.advertise<sensor_msgs::Image>(image_topic_, 1);
 
     nh_.param<std::string>("published_topics/flir_fused_topic", fusedMsg_topic_, "/rpi2/thermal/fused_msg");
-    fusedMsg_publisher_ = nh_.advertise<distrib_msgs::flirLeptonMsg>(fusedMsg_topic_, 10);
-
+    fusedMsg_publisher_ = nh_.advertise<distrib_msgs::flirLeptonMsg>(fusedMsg_topic_, 1);
   }
 
 
@@ -176,8 +203,8 @@ namespace flir_lepton
    * being filled in a column major way.
    */
   void FlirLeptonHardwareInterface::fill_ImageMsg(
-      const std::vector<uint16_t>& thermal_signals, sensor_msgs::Image* thermalImage,
-      uint16_t minValue, uint16_t maxValue)
+      const std::vector<uint16_t>& thermal_signals, 
+        sensor_msgs::Image* thermalImage, uint16_t minValue, uint16_t maxValue)
   {
     thermalImage->header.stamp = now_;
     thermalImage->header.frame_id = frame_id_;
@@ -205,8 +232,14 @@ namespace flir_lepton
   {
     flirMsg->header.stamp = now_;
     flirMsg->header.frame_id = frame_id_;
+
     flirMsg->thermalImage.header.stamp = now_;
     flirMsg->thermalImage.header.frame_id = frame_id_;
+    flirMsg->thermalImage.height = imageHeight_;
+    flirMsg->thermalImage.width = imageWidth_;
+    flirMsg->thermalImage.encoding = "mono8";
+    flirMsg->thermalImage.is_bigendian = 0;
+    flirMsg->thermalImage.step = imageWidth_ * sizeof(uint8_t);
 
     // Thermal sensor_msgs/Image 
     for (int i = 0; i < imageHeight_; i++) {
@@ -266,9 +299,10 @@ namespace flir_lepton
     std::string param;
 
     /* ---< Load dataset file from parameter server >--- */
-    nh_.getParam("dataset/spline_interpolated_data", param);
-    //nh_.param<std::string>("dataset/spline_interpolated_data", param, 
-      //"/home/pandora/rpi_ws/src/rpi_hardware_interface/data/flir_lepton/dataset_spline_interp.pandora");
+    //nh_.getParam("dataset/spline_interpolated_data", param);
+    nh_.param<std::string>("dataset/spline_interpolated_data", param, 
+      "/home/pandora/pandora_ws/src/rpi_hardware_interface/data" \
+      "/flir_lepton/dataset_spline_interp.pandora");
 
     strcpy(dataset_uri, param.c_str());
     /* ---< Open a file input stream to read the dataset >--- */
