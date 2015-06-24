@@ -106,7 +106,7 @@ class CameraEffector:
 
         # ---------------------- Publishers -------------------------- #
         self.joint_state_pub_ = rospy.Publisher(self.joint_states_topic_, \
-            JointState, queue_size = 10)
+            JointState, queue_size = 1)
         # ------------------------------------------------------------ #
 
         # ---------------- Configure PAN & TILT Servos --------------- #
