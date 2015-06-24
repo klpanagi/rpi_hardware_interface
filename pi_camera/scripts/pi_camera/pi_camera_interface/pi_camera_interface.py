@@ -22,7 +22,7 @@ class PiCameraInterface:
     def __init__(self):
         self.res_width_ = 640
         self.res_height_ = 480
-        self.framerate_ = 20
+        self.framerate_ = 30
         self.image_format_ = 'rgb'
         self.use_video_port_ = True
         
