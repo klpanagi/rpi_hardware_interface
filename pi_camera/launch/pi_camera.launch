@@ -9,5 +9,11 @@
     output="screen" 
   />
 
+  <rosparam
+    file="$(find pi_camera)/config/params.yaml"
+    command="load"
+    ns="pi_camera"
+  />
+
 
 </launch>
