@@ -1,0 +1,15 @@
+width: 640
+height: 480
+framerate: 30
+quality: 100
+tf_prefix: /pi_camera_frame
+
+published_topics:
+  image_topic: /raspicam/image/compressed
+  camera_info_topic: /raspicam/camera_info
+
+advertised_services:
+  start_capture: /raspicam/start_capture
+  stop_capture: /raspicam/stop_capture
+
+start_capturing: True

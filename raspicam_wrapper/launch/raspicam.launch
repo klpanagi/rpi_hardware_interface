@@ -1,0 +1,18 @@
+<launch>
+  
+
+  <node
+    name="raspicam"
+    pkg="raspicam"
+    type="raspicam_node"
+    output="screen" >
+
+    <rosparam
+      file="$(find raspicam_wrapper)/config/raspicam_params.yaml"  
+      command="load"
+    />
+  </node>
+ 
+
+
+</launch>
