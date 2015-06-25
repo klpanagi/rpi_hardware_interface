@@ -1,4 +1,42 @@
-#/usr/bin/env python
+#!/usr/bin/env python
+
+# Software License Agreement
+__version__ = "0.0.1"
+__status__ = "Production"
+__license__ = "BSD"
+__copyright__ = "Copyright (c) 2015, P.A.N.D.O.R.A. Team. All rights reserved."
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#  * Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above
+#    copyright notice, this list of conditions and the following
+#    disclaimer in the documentation and/or other materials provided
+#    with the distribution.
+#  * Neither the name of P.A.N.D.O.R.A. Team nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+__author__ = "Konstantinos Panayiotou"
+__maintainer__ = "Konstantinos Panayiotou"
+__email__ = "klpanagi@gmail.com"
+
 
 from sensor_msgs.msg import Image
 import picamera
@@ -9,7 +47,9 @@ import time
 import json
 import rospy
 import thread
+from threading import Thread
 #import picamera.array
+
 
 class PiCameraRosWrapper:
     ## TODO Load parameters from parameter server!!!
@@ -18,12 +58,20 @@ class PiCameraRosWrapper:
     #=======================================================================
     ## Default constructor
     def __init__(self):
-        self.res_width_ = 640
-        self.res_height_ = 480
-        self.framerate_ = 30
-        self.image_format_ = 'rgb'
-        self.use_video_port_ = True
-        self.exposure_mode_ = 'fixedfps'
+        self.thread_ = None
+
+        # ------------------- Load Parameters ------------------ #
+        self.res_width_ = rospy.get_param('~camera_params/width', 640)
+        self.res_height_ = rospy.get_param('~camera_params/height', 480)
+        self.framerate_ = rospy.get_param('~camera_params/framerate', 30)
+        self.image_format_ = rospy.get_param('~camera_params/image_format', \
+            'rgb')
+        self.use_video_port_ = rospy.get_param('~camera_params/use_video_port',\
+            True)
+        self.exposure_mode_ = rospy.get_param('~camera_params/exposure_mode', \
+            'fixedfps')
+        # ------------------------------------------------------ #
+
         #self.flash_mode_ = 'off'
         #self.shutter_speed_ = 30000 # us
         #self.led_state_ = 'on'
@@ -40,7 +88,6 @@ class PiCameraRosWrapper:
         #self.set_flash_mode(self.flash_mode_)
         #self.set_led_state(self.led_state_)
 
-        #self.camera_.start_preview()
         print "[PiCamera]: Waiting for camera to warmup for 2 seconds"
         for i in range(2, 0, -1):
             print "[PiCamera]: %s" %i
@@ -50,14 +97,14 @@ class PiCameraRosWrapper:
         rospy.loginfo("Exposure Speed: [%s]" % self.camera_.exposure_speed)
         rospy.loginfo("Exposure Mode: [%s]" % self.camera_.exposure_mode)
 
-        self.image_pub_ = rospy.Publisher('rpi2/pi_camera/image', Image, queue_size=1)
+        self.image_pub_ = rospy.Publisher('rpi2/pi_camera/image', Image, \
+            queue_size=1)
 
         self.image_msg_ = Image()
         self.image_msg_.height = self.res_height_
         self.image_msg_.width = self.res_width_
         self.image_msg_.encoding = 'rgb8'
         self.image_msg_.step = self.res_width_ * 3
-
     #=======================================================================
 
 
@@ -71,10 +118,15 @@ class PiCameraRosWrapper:
     ## Sets camera resolution
     # @param width Image width (e.g 640)
     # @param height Image height (e.g. 480)
+    #
     def set_resolution(self, width, height):
         self.camera_.resolution = (width, height)
     #=======================================================================
 
+
+    ## Sets camera exposure mode 
+    #  @param mode Exposure mode.
+    #
     def set_exposure_mode(self, mode):
         self.camera_.exposure_mode = mode
 
@@ -95,15 +147,41 @@ class PiCameraRosWrapper:
             rospy.logwarn("[PiCamera]: Invalid Argument")
             return False
 
+    ##
+    #   Used in order to publish an image frame to the releavant topic
+    #   @param frame Contains image values
+    #   @return Success index -- Boolean
+    #
     def publish(self, frame):
         #frame = stream.getvalue()
         if len(frame) == self.res_height_ * self.res_width_ * 3:
             self.image_msg_.data = frame
             self.image_pub_.publish(self.image_msg_)
+            return True
         else:
             rospy.logerr("[PiCamera]: Wrong frame size [%s]", len(frame))
+            return False
         
+    ##
+    #   Asyncronous execution
+    #   @return None
+    #
+    def run_continuous_async(self):
+        try:
+            self.thread_ = Thread(\
+                target=self.run_continuous_threaded, args=()) 
+            self.thread_.start()
+        except:
+            rospy.logfatal('Error on initializing async thread')
+            return 0
+        finally:
+            return 1
 
+
+    ##
+    #   This implemetation uses a thread to handle frame capturing
+    #   @return None
+    #
     def run_continuous_threaded(self):
         rawCapture = io.BytesIO()
         startT = timeit.default_timer()
@@ -117,6 +195,7 @@ class PiCameraRosWrapper:
             thread.start_new_thread(self.publish, (rawCapture.getvalue(), ))
             rawCapture.truncate(0)
             rawCapture.seek(0)
+        return
 
 
     def run_continuous(self):
