@@ -1,11 +1,10 @@
+width: 640
+height: 480
+framerate: 30
+image_format: rgb
+use_video_port: True
+exposure_mode: fixedfps
+
 published_topics:
   image: /rpi2/pi_camera/image
-
-camera_params:
-  width: 640
-  height: 480
-  framerate: 30
-  image_format: rgb
-  use_video_port: True
-  exposure_mode: fixedfps
 

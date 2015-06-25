@@ -61,15 +61,17 @@ class PiCameraRosWrapper:
         self.thread_ = None
 
         # ------------------- Load Parameters ------------------ #
-        self.res_width_ = rospy.get_param('~camera_params/width', 640)
-        self.res_height_ = rospy.get_param('~camera_params/height', 480)
-        self.framerate_ = rospy.get_param('~camera_params/framerate', 30)
-        self.image_format_ = rospy.get_param('~camera_params/image_format', \
+        self.res_width_ = rospy.get_param('~width', 640)
+        self.res_height_ = rospy.get_param('~height', 480)
+        self.framerate_ = rospy.get_param('~framerate', 30)
+        self.image_format_ = rospy.get_param('~image_format', \
             'rgb')
-        self.use_video_port_ = rospy.get_param('~camera_params/use_video_port',\
+        self.use_video_port_ = rospy.get_param('~use_video_port',\
             True)
-        self.exposure_mode_ = rospy.get_param('~camera_params/exposure_mode', \
+        self.exposure_mode_ = rospy.get_param('~exposure_mode', \
             'fixedfps')
+        self.image_topic_ = rospy.get_param('~published_topics/image', \
+            '/rpi2/pi_camera/image')
         # ------------------------------------------------------ #
 
         #self.flash_mode_ = 'off'
@@ -97,7 +99,7 @@ class PiCameraRosWrapper:
         rospy.loginfo("Exposure Speed: [%s]" % self.camera_.exposure_speed)
         rospy.loginfo("Exposure Mode: [%s]" % self.camera_.exposure_mode)
 
-        self.image_pub_ = rospy.Publisher('rpi2/pi_camera/image', Image, \
+        self.image_pub_ = rospy.Publisher(self.image_topic_, Image, \
             queue_size=1)
 
         self.image_msg_ = Image()
