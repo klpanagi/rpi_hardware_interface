@@ -38,21 +38,23 @@ __maintainer__ = "Konstantinos Panayiotou"
 __email__ = "klpanagi@gmail.com"
 
 
+
 from ServoController import ServoController
 import rospy
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64
+import math
+
 
 
 class CameraEffector:
     ##
     #  Default Constructor
     #
-    # ======================================================================= #
     def __init__(self):
         self.debug_ = 0 
         self.acceptable_cmd_error_ = 0.1
-        self.servo_ctrl_ = ServoController(1) # 1== Enable debug mode
+        self.servo_ctrl_ = ServoController(0) # 1 == Enable debug mode
         self.joint_state_msg_ = JointState()
         self.joint_name_ = {}
         self.subscribers_ = {}
@@ -83,19 +85,14 @@ class CameraEffector:
             '~tilt_joint/offset', 34.3775)
 
         max_pos = rospy.get_param('~tilt_joint/limits/max', 60)
-        #max_pos += self.offsets_['tilt'] 
         min_pos = rospy.get_param('~tilt_joint/limits/min', 60)
-        #min_pos += self.offsets_['tilt'] 
         self.pos_limits_['tilt'] = {'max': max_pos, 'min': min_pos}
 
         max_pos = rospy.get_param('~pan_joint/limits/max', 60)
-        #max_pos += self.offsets_['pan'] 
         min_pos = rospy.get_param('~pan_joint/limits/min', 60)
-        #min_pos += self.offsets_['pan'] 
         self.pos_limits_['pan'] = {'max': max_pos, 'min': min_pos}
 
         # ------------------------------------------------------------ #
-
 
         # ---------------------- Subscribers ------------------------- #
         rospy.Subscriber(self.subscribers_['pan_command'], Float64, \
@@ -126,9 +123,7 @@ class CameraEffector:
         self.joint_state_msg_.position.append(0)
         self.joint_state_msg_.position.append(0)
         # ------------------------------------------------------------ #
-
     # ======================================================================= #
-
 
 
     ##
@@ -156,44 +151,90 @@ class CameraEffector:
 
 
     ##
+    #  Transforms from camera joint to servo joint angle.
+    #  @param angle Camera joint angle value
+    #
+    def camera_to_servo_transform(self, angle):
+        # ---< Constant facotrs >--- #
+        A = 32  
+        B = 13
+        r1 = 10
+        r2 = 30
+        r3 = 12
+        # -------------------------- #
+
+        y2 = 1.0 * math.cos(angle) * r3
+        x2 = 1.0 * math.sin(angle) * r3
+        y1 = B - y2
+        x1 = A + x2
+
+        temp = 1.0 * x1 / y1
+        fi_angle = math.atan(temp)
+
+        p = 1.0 * x1 / math.sin(fi_angle)
+
+        temp = 1.0 * (1.0 * r1 * r1 + 1.0 * p * p - 1.0 * r2 * r2) \
+            / (2.0 * r1 * p)
+        r1p_angle = math.acos(temp)
+
+        theta = fi_angle - r1p_angle
+        return theta
+    # ========================================================================
+
+
+    ##
     #  Command servo to move at given angle
     #  @param servo_id Servo id to move
     #  @param angle Move to angle==<angle>
     #
     def set_servo_pos(self, servo_id, rad):
-        degrees = self.servo_ctrl_.radians_to_degrees(rad)
-        #print degrees
+
+
         min_accept = self.pos_limits_[servo_id]['min'] * \
             self.acceptable_cmd_error_ + self.pos_limits_[servo_id]['min']
         max_accept = self.pos_limits_[servo_id]['max'] * \
             self.acceptable_cmd_error_ + self.pos_limits_[servo_id]['max']
 
         # ----- Check off-limits command ---- #
-        if degrees < min_accept or degrees > max_accept:
+        if rad < min_accept or rad > max_accept:
             # Do not publish. Invalid command
-            rospy.logwarn("Command [%s <--> rad, %s <--> degrees] out of bounds"\
-                + "  ---> Limits: {min: %s, max: %s}", rad, degrees, \
+            rospy.logwarn("Command [%s <--> rad] out of bounds"\
+                + "  ---> Limits: {min: %s, max: %s}", raid, \
                 self.pos_limits_[servo_id]['min'], \
                 self.pos_limits_[servo_id]['max'])
             rospy.logfatal("Command is not acceptable!! Staying idle")
-            return
-        elif degrees > self.pos_limits_[servo_id]['max']:
-            rospy.logwarn("Command [%s <--> rad, %s <--> degrees] out of bounds"\
-                + "  ---> Limits: {min: %s, max: %s (Degrees)}. " + \
-                "Commanding at max position", rad, degrees, \
+            return 0
+        elif rad > self.pos_limits_[servo_id]['max']:
+            rospy.logwarn("Command [%s <--> rad] out of bounds"\
+                + "  ---> Limits: {min: %s, max: %s}. " + \
+                "Commanding at max position", rad, \
                 self.pos_limits_[servo_id]['min'], \
                 self.pos_limits_[servo_id]['max'])
-            degrees = self.pos_limits_[servo_id]['max']
-        elif degrees < self.pos_limits_[servo_id]['min']:
-            rospy.logwarn("Command [%s <--> rad, %s <--> degrees] out of bounds"\
-                + "  ---> Limits: {min: %s, max: %s (Degrees)}. " + \
+            rad = self.pos_limits_[servo_id]['max']
+        elif rad < self.pos_limits_[servo_id]['min']:
+            rospy.logwarn("Command [%s <--> rad] out of bounds"\
+                + "  ---> Limits: {min: %s, max: %s}. " + \
                 "Commanding at min position", rad, \
                 degrees, self.pos_limits_[servo_id]['min'], \
                 self.pos_limits_[servo_id]['max'])
-            degrees = self.pos_limits_[servo_id]['min']
+            rad = self.pos_limits_[servo_id]['min']
         # ----------------------------------- #
-        degrees -= self.offsets_[servo_id]
+
+        # ---< Used mainly for debug purposes >--- #
+        degrees = self.servo_ctrl_.radians_to_degrees(rad)
+        rospy.loginfo("[%s servo]:  Commanding camera at angle --> %s radians,  %s degrees" % \
+            (servo_id, rad, degrees))
+        rad -= self.offsets_[servo_id]
+        #  ** Use the transformatio function to transform camera joint angle to 
+        #  ** servo joint angle.
+        if servo_id == 'tilt':
+            rad = self.camera_to_servo_transform(rad)
+        degrees = self.servo_ctrl_.radians_to_degrees(rad)
+        rospy.loginfo("[%s servo]: Angle command to servo: %s degrees ,  %s radians" % \
+            (servo_id, rad, degrees))
+        # --------------------------------------- #
         self.servo_ctrl_.set_pos_degrees(servo_id, degrees)
+        return 1
     # ======================================================================= #
 
 

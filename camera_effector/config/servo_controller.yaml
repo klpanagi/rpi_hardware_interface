@@ -3,5 +3,5 @@ servo_params:
     left: 600
     neutral: 1500
     right: 2400
-  error_degrees: -9.746
+  error_degrees: 0
 
