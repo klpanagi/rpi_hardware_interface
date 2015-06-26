@@ -4,8 +4,8 @@ published_topics:
 pan_joint:
   joint_name: camera_effector_pan_joint
   limits:
-    max: 80
-    min: -80
+    max: 1.3962
+    min: -1.3962
   offset: 0
   servo:
     name: pan

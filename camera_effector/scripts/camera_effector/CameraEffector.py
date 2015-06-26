@@ -123,6 +123,13 @@ class CameraEffector:
         self.joint_state_msg_.position.append(0)
         self.joint_state_msg_.position.append(0)
         # ------------------------------------------------------------ #
+
+        rospy.logwarn("[Camera-Effector]: Kinematics limits [Tilt]: " + \
+            "{min --> %s,  max --> %s}", self.pos_limits_['tilt']['min'], \
+            self.pos_limits_['tilt']['max'])
+        rospy.logwarn("[Camera-Effector]: Kinematics limits [Pan]: " + \
+            "{min --> %s,  max --> %s}", self.pos_limits_['pan']['min'], \
+            self.pos_limits_['pan']['max'])
     # ======================================================================= #
 
 
@@ -188,8 +195,6 @@ class CameraEffector:
     #  @param angle Move to angle==<angle>
     #
     def set_servo_pos(self, servo_id, rad):
-
-
         min_accept = self.pos_limits_[servo_id]['min'] * \
             self.acceptable_cmd_error_ + self.pos_limits_[servo_id]['min']
         max_accept = self.pos_limits_[servo_id]['max'] * \
