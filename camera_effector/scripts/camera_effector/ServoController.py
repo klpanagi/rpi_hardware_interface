@@ -55,16 +55,14 @@ class ServoController:
     def __init__(self, debug_on):
         self.debug_ = debug_on
         self.gpio_ = pigpio.pi()
-
                 
         # --------------------- Load parameters ---------------------- #
         left_pos = rospy.get_param( \
-            '/servo_controller/servo_params/base_positions/left', 900)
+            '/servo_controller/servo_params/base_positions/left', 600)
         right_pos = rospy.get_param(
-            '/servo_controller/servo_params/base_positions/right', 2100)
+            '/servo_controller/servo_params/base_positions/right', 2400)
         neutral_pos = rospy.get_param( \
             '/servo_controller/servo_params/base_positions/neutral', 1500)
-
 
         ## Specific to servo
         self.base_positions_ = {'left': left_pos, \
@@ -74,7 +72,7 @@ class ServoController:
         self.servo_vel_ = {}
 
         self.servo_error_degrees_ = rospy.get_param( \
-            '/servo_controller/servo_params/error_degrees', -9.746)
+            '/servo_controller/servo_params/error_degrees', 0)
 
     # ======================================================================= #
 
@@ -91,6 +89,10 @@ class ServoController:
     # ======================================================================= #
 
 
+    ##
+    #  Enables previously registered servo 
+    #  @param servo_id Servo Id.
+    #
     def enable_servo(self, servo_id):
         self.gpio_.set_mode(self.servo_pin_[servo_id], pigpio.OUTPUT)
     # ======================================================================= #
@@ -125,7 +127,8 @@ class ServoController:
     ##
     #  @brief set the servo at given angle
     #  @param degrees (Absolute value)
-    #  @param servo Servi index. (String) == 'pan' || 'tilt'
+    #  @param servo_id Servo index. (String) == 'pan' || 'tilt'
+    #
     def set_pos_degrees(self, servo_id, degrees):
         # --- Perform error correction too --- #
         degrees_no_error = degrees - self.servo_error_degrees_
@@ -141,8 +144,12 @@ class ServoController:
     # ======================================================================= #
 
 
-    ##
+    ## 
+    #  Linear conversion function
     #  @param old_range [min,max]
+    #  @param new_range [min,max]
+    #  @param value Value to perform linear conversion
+    #
     def linear_conversion(self, old_range, new_range, value):
         #a = old_range[1] - old_range[0]
         #b = new_range[1] - new_range[0]
