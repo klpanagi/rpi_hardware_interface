@@ -91,7 +91,6 @@ class CameraEffector:
         max_pos = rospy.get_param('~pan_joint/limits/max', 60)
         min_pos = rospy.get_param('~pan_joint/limits/min', 60)
         self.pos_limits_['pan'] = {'max': max_pos, 'min': min_pos}
-
         # ------------------------------------------------------------ #
 
         # ---------------------- Subscribers ------------------------- #
@@ -204,7 +203,7 @@ class CameraEffector:
         if rad < min_accept or rad > max_accept:
             # Do not publish. Invalid command
             rospy.logwarn("Command [%s <--> rad] out of bounds"\
-                + "  ---> Limits: {min: %s, max: %s}", raid, \
+                + "  ---> Limits: {min: %s, max: %s}", rad, \
                 self.pos_limits_[servo_id]['min'], \
                 self.pos_limits_[servo_id]['max'])
             rospy.logfatal("Command is not acceptable!! Staying idle")

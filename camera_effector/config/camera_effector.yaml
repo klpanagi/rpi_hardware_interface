@@ -1,5 +1,5 @@
 published_topics:
-  camera_effector_joint_states: /rpi2/camera_effetor/joint_states
+  camera_effector_joint_states: /camera_effetor/joint_states
 
 pan_joint:
   joint_name: camera_effector_pan_joint
