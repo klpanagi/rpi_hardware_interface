@@ -8,3 +8,5 @@ exposure_mode: fixedfps
 published_topics:
   image: /rpi2/pi_camera/image
 
+pi_camera_urdf:
+  optical_frame: /pi_camera_optical_frame

@@ -72,6 +72,8 @@ class PiCameraRosWrapper:
             'fixedfps')
         self.image_topic_ = rospy.get_param('~published_topics/image', \
             '/rpi2/pi_camera/image')
+        self.optical_frame_ = rospy.get_param(\
+            '~pi_camera_urdf/optical_frame', '/pi_camera_optical_frame')
         # ------------------------------------------------------ #
 
         #self.flash_mode_ = 'off'
@@ -107,6 +109,7 @@ class PiCameraRosWrapper:
         self.image_msg_.width = self.res_width_
         self.image_msg_.encoding = 'rgb8'
         self.image_msg_.step = self.res_width_ * 3
+        self.image_msg_.header.frame_id = self.optical_frame_
     #=======================================================================
 
 
@@ -158,6 +161,7 @@ class PiCameraRosWrapper:
         #frame = stream.getvalue()
         if len(frame) == self.res_height_ * self.res_width_ * 3:
             self.image_msg_.data = frame
+            self.image_msg_.header.stamp = rospy.Time.now()
             self.image_pub_.publish(self.image_msg_)
             return True
         else:
