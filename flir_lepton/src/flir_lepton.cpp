@@ -53,20 +53,28 @@ namespace flir_lepton
     int param;
     // Fill the data map
     dataMap_ = fillCalibrationMap();
-
     flirSpi_.configFlirSpi(nh_);
     frame_buffer_ = flirSpi_.makeFrameBuffer();
-    nh_.param<std::string>("flir_urdf/camera_optical_frame", frame_id_, "/flir_optical_frame");
+
+    /* ----------- Load Parameters ------------ */
+    nh_.param<std::string>("flir_urdf/camera_optical_frame", frame_id_,
+      "/flir_optical_frame");
     nh_.param<int32_t>("thermal_image/height", param, 60);
     imageHeight_ = param;
     nh_.param<int32_t>("thermal_image/width", param, 80);
     imageWidth_ = param;
-    openDevice();
-    nh_.param<std::string>("published_topics/flir_image_topic", image_topic_, "/rpi2/thermal/image");
-    image_publisher_ = nh_.advertise<sensor_msgs::Image>(image_topic_, 1);
+    nh_.param<std::string>("published_topics/flir_image_topic", image_topic_,
+      "/rpi2/thermal/image");
+    nh_.param<std::string>("published_topics/flir_fused_topic",
+      fusedMsg_topic_, "/rpi2/thermal/fused_msg");
+    /* ----------------------------------------- */
+    MAX_RESETS_ERROR = 750;
+    MAX_RESTART_ATTEMPS_EXIT = 5;
 
-    nh_.param<std::string>("published_topics/flir_fused_topic", fusedMsg_topic_, "/rpi2/thermal/fused_msg");
-    fusedMsg_publisher_ = nh_.advertise<distrib_msgs::flirLeptonMsg>(fusedMsg_topic_, 1);
+    openDevice();
+    fusedMsg_publisher_ = nh_.advertise<distrib_msgs::flirLeptonMsg>(
+      fusedMsg_topic_, 1);
+    image_publisher_ = nh_.advertise<sensor_msgs::Image>(image_topic_, 1);
   }
 
 
@@ -77,7 +85,8 @@ namespace flir_lepton
   }
 
 
-  void FlirLeptonHardwareInterface::FlirSpi::configFlirSpi(const ros::NodeHandle& nh)
+  void FlirLeptonHardwareInterface::FlirSpi::configFlirSpi(
+    const ros::NodeHandle& nh)
   {
     int param;
     mode = SPI_MODE_3;
@@ -110,9 +119,6 @@ namespace flir_lepton
     uint16_t minValue, maxValue;
     processFrame(frame_buffer_, &thermal_signals_, &minValue, &maxValue);
 
-    //minValue = MIN_VALUE;  //Added by Taras
-    //maxValue = MAX_VALUE;  //Added by Taras
-    
     // Sensor_msgs/Image
     sensor_msgs::Image thermalImage;
 
@@ -137,6 +143,7 @@ namespace flir_lepton
   {
     int packet_number = -1;
     int resets = 0;
+    int restarts = 0;
 
     for (uint16_t i = 0; i < flirSpi_.packets_per_frame; i++)
     {
@@ -152,16 +159,28 @@ namespace flir_lepton
         // sleep for 1ms
         ros::Duration(0.001).sleep();
 
-        if (resets == 2000) //Reach 750 sometimes
+        // If resets reach this value, we assume an error on communication with
+        // flir-lepton sensor. Perform communication restart
+        if (resets == MAX_RESETS_ERROR) //Reach 750 sometimes
         {
+          restarts ++;
           ROS_ERROR("[Flir-Lepton]: Error --> resets numbered at [%d]", resets);
           closeDevice();
           ros::Duration(1.0).sleep();
           openDevice();
           resets = 0;
         }
+
+        if (restarts > MAX_RESTART_ATTEMPS_EXIT)
+        {
+          // If true we assume an exit status.. Kill process and exit
+          ROS_FATAL("[Flir-Lepton]: Cannot communicate with sensor. Exiting...");
+          ros::shutdown();
+          exit(1);
+        }
       }
     }
+    restarts = 0;
     //ROS_INFO("[Flir-Lepton]: Succesfully read of a single frame, resets=[%d]",
       //resets);
   }

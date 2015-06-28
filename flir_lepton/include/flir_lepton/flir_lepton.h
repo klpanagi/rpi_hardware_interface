@@ -111,6 +111,9 @@ namespace flir_lepton
 
       std::map<uint16_t, float> dataMap_;
 
+      int MAX_RESTART_ATTEMPS_EXIT;
+      int MAX_RESETS_ERROR;
+
       /*!
       * @brief Opens SPI device port for communication with flir lepton camera
       */

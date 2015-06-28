@@ -5,7 +5,7 @@
     type="flir_lepton_node" 
     name="flir_lepton"
     pkg="flir_lepton" 
-    respawn="true" 
+    respawn="false" 
     output="screen" 
   />
 
