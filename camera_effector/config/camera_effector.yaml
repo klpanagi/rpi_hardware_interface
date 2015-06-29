@@ -6,7 +6,7 @@ pan_joint:
   limits:
     max: 1.3962
     min: -1.3962
-  offset: 0
+  offset: -0.104
   servo:
     name: pan
     pin: 17
