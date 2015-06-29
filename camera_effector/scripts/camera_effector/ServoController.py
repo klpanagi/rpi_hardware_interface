@@ -55,6 +55,10 @@ class ServoController:
     def __init__(self, debug_on):
         self.debug_ = debug_on
         self.gpio_ = pigpio.pi()
+        self.registered_servos_ = []
+        self.servo_pin_ = {}
+        self.servo_pos_ = {}
+        self.servo_vel_ = {}
                 
         # --------------------- Load parameters ---------------------- #
         left_pos = rospy.get_param( \
@@ -67,9 +71,6 @@ class ServoController:
         ## Specific to servo
         self.base_positions_ = {'left': left_pos, \
             'neutral': neutral_pos, 'right': right_pos}
-        self.servo_pin_ = {}
-        self.servo_pos_ = {}
-        self.servo_vel_ = {}
 
         self.servo_error_degrees_ = rospy.get_param( \
             '/servo_controller/servo_params/error_degrees', 0)
@@ -83,6 +84,7 @@ class ServoController:
     #  @param pin BCM_GPIO Pin number associated to the servo.
     #
     def register_servo(self, servo_id, pin):
+        self.registered_servos_.append(servo_id)
         self.servo_pin_[servo_id] = pin
         self.servo_pos_[servo_id] = None
         self.servo_vel_[servo_id] = None
@@ -94,7 +96,17 @@ class ServoController:
     #  @param servo_id Servo Id.
     #
     def enable_servo(self, servo_id):
-        self.gpio_.set_mode(self.servo_pin_[servo_id], pigpio.OUTPUT)
+        try:
+            self.gpio_.set_mode(self.servo_pin_[servo_id], pigpio.OUTPUT)
+        except:
+            e = sys.exc_info()[0]
+            rospy.logfatal(\
+                "[Servo-Controller]: Failed to set servo [%s] mode", \
+                % servo_id)
+            rospy.logfatal(e)
+            return False
+        finally:
+            return True
     # ======================================================================= #
 
 
@@ -105,6 +117,7 @@ class ServoController:
     def get_pos_degrees(self, servo_id):
         return self.servo_pos_[servo_id]
     # ======================================================================= #
+
 
     ##
     #  Returns servo current position in degrees.
@@ -134,13 +147,41 @@ class ServoController:
         degrees_no_error = degrees - self.servo_error_degrees_
         pulse_width = self.degrees_to_dutyCycle(degrees_no_error)
 
-        if self.debug_:
-          rospy.loginfo( \
-              "Setting servo [%s] position (Absolute Values): Pos_Degrees: %s,   Duty_Cycle: %s" \
-              %(servo_id, degrees, pulse_width) )
+        try:
+            self.gpio_.set_servo_pulsewidth(self.servo_pin_[servo_id], \
+                pulse_width)
+        except:
+            e = sys.exc_info()[0]
+            rospy.logfatal("[Servo-Controller]: Failed to set pulse_width")
+            rospy.logfatal(e)
+            return False
+        finally:
+            if self.debug_:
+                rospy.loginfo( \
+                    "Setting servo [%s] position (Absolute Values):" + \
+                    " Pos_Degrees: %s,   Duty_Cycle: %s" \
+                    %(servo_id, degrees, pulse_width) )
+            self.servo_pos_[servo_id] = degrees
+            return True
+    # ======================================================================= #
 
-        self.gpio_.set_servo_pulsewidth(self.servo_pin_[servo_id], pulse_width)
-        self.servo_pos_[servo_id] = degrees
+
+    ##
+    #  Disable servo. Set pwm off.
+    #
+    def disable_servo(self, servo_id):
+        off = 0;
+        pin = self.servo_pin_[servo_id]
+        try:
+            self.gpio_.set_servo_pulsewidth(pin, off)
+        except:
+            e = sys.exc_info()[0]
+            rospy.logfatal("[Servo-Controller]: Failed to set pulse_width")
+            rospy.logfatal(e)
+            return False
+        finally:
+            rospy.logwarn("[Servo-Controller]: Disabled servo --> %s", servo_id)
+            return True
     # ======================================================================= #
 
 
@@ -160,6 +201,10 @@ class ServoController:
     # ======================================================================= #
 
 
+    ##
+    #  Translattes PWM duty_cycle command to degrees.
+    #  @param duty_cycle
+    #
     def dutyCycle_to_degrees(self, duty_cycle):
         new_range = [-90, 90]
         old_range = [600, 2400]
@@ -168,7 +213,7 @@ class ServoController:
     # ======================================================================= #
 
     
-    ## 
+    ##
     #  Translates degrees to PWM duty cycle to command the servo
     #  @param degrees
     #
@@ -182,23 +227,30 @@ class ServoController:
     # ======================================================================= #
 
 
-    ## 
+    ##
     #  Converts angle values to radians
     #  @param degrees 
     #
     def degrees_to_radians(self, degrees):
         return (1.0 * degrees * math.pi / 180)
-        
     # ======================================================================= #
 
 
-    ## 
+    ##
     #  Converts radian values to degrees
     #  @param rad
     #
     def radians_to_degrees(self, rad):
         return (rad * 180 / math.pi)
-        
+    # ======================================================================= #
+
+
+    ##
+    #  Default destructor
+    #
+    def __del__(self):
+        for servo_id in self.registered_servos_:
+            self.disable_servo(servo_id)
     # ======================================================================= #
 
 
