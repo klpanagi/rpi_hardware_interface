@@ -46,7 +46,6 @@
 #include <stdint.h>
 #include <map>
 #include <cstring>
-#include <vector>
 
 
 namespace flir_lepton
