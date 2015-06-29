@@ -53,19 +53,11 @@
 #include <stdint.h>
 #include <limits.h>
 
-/* ---< SPI interface related >--- */
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
-#include <linux/types.h>
-#include <linux/spi/spidev.h>
-/* ------------------------------- */
 
 /* ---< ROS related >--- */
 #include "ros/ros.h"
 #include "sensor_msgs/Image.h"
 #include "distrib_msgs/flirLeptonMsg.h"
-#include <std_msgs/Float32MultiArray.h>
 /* --------------------- */
 
 namespace flir_lepton
@@ -83,36 +75,50 @@ namespace flir_lepton
         uint16_t packets_per_frame;
         uint16_t packet_size_uint16;
         uint16_t frame_size_uint16;
+        int handler;
 
         void configFlirSpi(const ros::NodeHandle& nh);
         uint8_t* makeFrameBuffer(void);
       };
 
+      /* ------< Published Topics >------ */
       std::string image_topic_;
       std::string fusedMsg_topic_;
+      /* -------------------------------- */
 
+      /* -------< ROS Publishers >------- */
       ros::Publisher image_publisher_;
       ros::Publisher fusedMsg_publisher_;
+      /* -------------------------------- */
       ros::NodeHandle nh_;
-
+      ros::Time now_;
 
       std::string device_;
-      int spiDevice_;
       int statusValue_;
-      FlirSpi flirSpi_;
+      FlirSpi flirSpi_;  // SPI interface container
 
       uint8_t* frame_buffer_;
-      std::vector<uint16_t> thermal_signals_;
+      std::vector<uint16_t> thermal_signals_;  // Raw signal values
 
-      ros::Time now_;
+      /* -----< Thermal Image Characteristics >----- */
       std::string frame_id_;
+      std::string image_encoding_;
       uint16_t imageHeight_;
       uint16_t imageWidth_;
+      /* ------------------------------------------- */
 
-      std::map<uint16_t, float> dataMap_;
+      // Raw sensor signal values to absolute thermal values map
+      std::map<uint16_t, float> calibMap_;
+      std::string calibFileUri_;
 
       int MAX_RESTART_ATTEMPS_EXIT;
       int MAX_RESETS_ERROR;
+
+
+      /*!
+       * @brief Loads parameters from parameter server
+       */
+      void loadParameters(void);
 
       /*!
       * @brief Opens SPI device port for communication with flir lepton camera
@@ -141,27 +147,20 @@ namespace flir_lepton
 
 
       /*!
-      * @brief Fills Thermal image ros message
-      */
-      void fill_ImageMsg(
-          const std::vector<uint16_t>& thermal_signals, 
-            sensor_msgs::Image* thermalImage, uint16_t minValue,
-            uint16_t maxValue);
-
-
-      /*!
       * @brief Fills Thermal fused ros message
       */
-      void fill_fusedMsg(
-          const std::vector<uint16_t>& thermal_signals,
-            distrib_msgs::flirLeptonMsg* flirMsg,
-            uint16_t minValue, uint16_t maxValue);
+      void craftFusedMsg(const std::vector<uint16_t>& thermal_signals,
+        distrib_msgs::flirLeptonMsg* flirMsg, uint16_t minValue, 
+        uint16_t maxValue);
 
 
       /*!
-      * @brief Fill an std::map that contains the calibration dataset
-      */
-      std::map<uint16_t, float> fillCalibrationMap(void);
+       * @brief Fills Thermal image ros message
+       */
+      void craftImageMsg(
+        const std::vector<uint16_t>& thermal_signals, 
+        sensor_msgs::Image* thermalImage, uint16_t minValue,
+        uint16_t maxValue);
 
 
     public:
@@ -183,21 +182,6 @@ namespace flir_lepton
       *  on the relevant topic
       */
       void run(void);
-
-
-      /*!
-      * @brief Converts a signal value to an actual image value by using
-      *  a linear interpolation method.
-      */
-      uint8_t signalToImageValue(uint16_t signalValue, uint16_t minVal,
-        uint16_t maxVal);
-
-
-      /*!
-       * @brief Convert a signal value to absolute temperature value.
-       * @param signalValue Signal value obtained from flir-lepton sensor.
-       */ 
-      float signalToTemperature(uint16_t signalValue);
 
   };
 }  // namespace flir_lepton

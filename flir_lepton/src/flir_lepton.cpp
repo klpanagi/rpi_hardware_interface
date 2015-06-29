@@ -36,27 +36,62 @@
  * *  Tsirigotis Christos
  * * Maintainer: Konstantinos Panayiotou
  * * Email: klpanagi@gmail.com
+ * *
  * *********************************************************************/
 
 #include "flir_lepton/flir_lepton.h"
+#include "flir_lepton/utils.h"
 
-#define MIN_VALUE 7800
-#define MAX_VALUE 8600
+/* ---< SPI interface related >--- */
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <linux/types.h>
+#include <linux/spi/spidev.h>
+/* ------------------------------- */
+
 
 namespace flir_lepton
 {
-
-  FlirLeptonHardwareInterface::FlirLeptonHardwareInterface(const std::string& ns):
+  using flir_lepton_utils::Utils;
+  
+  FlirLeptonHardwareInterface::FlirLeptonHardwareInterface(
+    const std::string& ns):
     nh_(ns),
-    device_("/dev/spidev0.0")
+    device_("/dev/spidev0.0"),
+    image_encoding_("mono8"),
+    MAX_RESETS_ERROR(750),
+    MAX_RESTART_ATTEMPS_EXIT(20)
   {
-    int param;
-    // Fill the data map
-    dataMap_ = fillCalibrationMap();
-    flirSpi_.configFlirSpi(nh_);
+    loadParameters();
     frame_buffer_ = flirSpi_.makeFrameBuffer();
 
+    calibMap_ = Utils::loadThernalCalibMap(calibFileUri_);
+
+    openDevice();
+    fusedMsg_publisher_ = nh_.advertise<distrib_msgs::flirLeptonMsg>(
+      fusedMsg_topic_, 1);
+    image_publisher_ = nh_.advertise<sensor_msgs::Image>(image_topic_, 1);
+  }
+
+
+
+  FlirLeptonHardwareInterface::~FlirLeptonHardwareInterface()
+  {
+    closeDevice();
+    delete[] frame_buffer_;
+  }
+
+
+
+  void FlirLeptonHardwareInterface::loadParameters(void)
+  {
+    int param;
     /* ----------- Load Parameters ------------ */
+    nh_.param<std::string>("dataset/spline_interpolated_data", calibFileUri_, 
+      "/home/pandora/pandora_ws/src/rpi_hardware_interface/data" \
+      "/flir_lepton/dataset_spline_interp.pandora");
+
     nh_.param<std::string>("flir_urdf/camera_optical_frame", frame_id_,
       "/flir_optical_frame");
     nh_.param<int32_t>("thermal_image/height", param, 60);
@@ -68,21 +103,10 @@ namespace flir_lepton
     nh_.param<std::string>("published_topics/flir_fused_topic",
       fusedMsg_topic_, "/rpi2/thermal/fused_msg");
     /* ----------------------------------------- */
-    MAX_RESETS_ERROR = 750;
-    MAX_RESTART_ATTEMPS_EXIT = 5;
 
-    openDevice();
-    fusedMsg_publisher_ = nh_.advertise<distrib_msgs::flirLeptonMsg>(
-      fusedMsg_topic_, 1);
-    image_publisher_ = nh_.advertise<sensor_msgs::Image>(image_topic_, 1);
+    flirSpi_.configFlirSpi(nh_);
   }
 
-
-  FlirLeptonHardwareInterface::~FlirLeptonHardwareInterface()
-  {
-    closeDevice();
-    delete[] frame_buffer_;
-  }
 
 
   void FlirLeptonHardwareInterface::FlirSpi::configFlirSpi(
@@ -105,10 +129,12 @@ namespace flir_lepton
   }
 
 
+
   uint8_t* FlirLeptonHardwareInterface::FlirSpi::makeFrameBuffer(void)
   {
     return new uint8_t[packet_size * packets_per_frame];
   }
+
 
 
   void FlirLeptonHardwareInterface::run(void)
@@ -126,17 +152,17 @@ namespace flir_lepton
     distrib_msgs::flirLeptonMsg fusedMsg;
 
     // Create the Image message
-    fill_ImageMsg(thermal_signals_, &thermalImage, minValue, maxValue);
+    craftImageMsg(thermal_signals_, &thermalImage, minValue, maxValue);
 
     // Create the custom message
-    fill_fusedMsg(thermal_signals_, &fusedMsg, minValue, maxValue);
+    craftFusedMsg(thermal_signals_, &fusedMsg, minValue, maxValue);
 
+    /* --------< Publish Messages >-------- */
     image_publisher_.publish(thermalImage);
-
-    //image_publisher_.publish(flirMsg);    
-
     fusedMsg_publisher_.publish(fusedMsg);    
+    /* ------------------------------------ */
   }
+
 
 
   void FlirLeptonHardwareInterface::readFrame(uint8_t** frame_buffer)
@@ -148,7 +174,7 @@ namespace flir_lepton
     for (uint16_t i = 0; i < flirSpi_.packets_per_frame; i++)
     {
       // flir sends discard packets that we need to resolve
-      read(spiDevice_, &(*frame_buffer)[flirSpi_.packet_size * i],
+      read(flirSpi_.handler, &(*frame_buffer)[flirSpi_.packet_size * i],
         sizeof(uint8_t) * flirSpi_.packet_size);
       packet_number = (*frame_buffer)[i * flirSpi_.packet_size + 1];
       if (packet_number != i)
@@ -171,24 +197,22 @@ namespace flir_lepton
           resets = 0;
         }
 
+        // If true we assume an exit status.. Kill process and exit
         if (restarts > MAX_RESTART_ATTEMPS_EXIT)
         {
-          // If true we assume an exit status.. Kill process and exit
           ROS_FATAL("[Flir-Lepton]: Cannot communicate with sensor. Exiting...");
           ros::shutdown();
           exit(1);
         }
       }
     }
-    restarts = 0;
-    //ROS_INFO("[Flir-Lepton]: Succesfully read of a single frame, resets=[%d]",
-      //resets);
   }
 
 
+
   void FlirLeptonHardwareInterface::processFrame(
-      uint8_t* frame_buffer, std::vector<uint16_t>* thermal_signals,
-      uint16_t* minValue, uint16_t* maxValue)
+    uint8_t* frame_buffer, std::vector<uint16_t>* thermal_signals,
+    uint16_t* minValue, uint16_t* maxValue)
   {
     int row, column;
     uint16_t value;
@@ -216,66 +240,48 @@ namespace flir_lepton
   }
 
 
-  /**
-   * @details Thermal_signals is in column major as this is the way that the
-   * packages are sent from the spi interface. Right now thermalImage's data is
-   * being filled in a column major way.
-   */
-  void FlirLeptonHardwareInterface::fill_ImageMsg(
-      const std::vector<uint16_t>& thermal_signals, 
-        sensor_msgs::Image* thermalImage, uint16_t minValue, uint16_t maxValue)
+
+  void FlirLeptonHardwareInterface::craftImageMsg(
+    const std::vector<uint16_t>& thermal_signals, 
+    sensor_msgs::Image* thermalImage, uint16_t minValue, uint16_t maxValue)
   {
     thermalImage->header.stamp = now_;
     thermalImage->header.frame_id = frame_id_;
-
     thermalImage->height = imageHeight_;
     thermalImage->width = imageWidth_;
-
-    thermalImage->encoding = "mono8";
+    thermalImage->encoding = image_encoding_;
     thermalImage->is_bigendian = 0;
     thermalImage->step = imageWidth_ * sizeof(uint8_t);
 
     for (int i = 0; i < imageWidth_; i++) {
       for (int j = 0; j < imageHeight_; j++) {
-        uint8_t value = signalToImageValue(thermal_signals.at(i * imageHeight_ + j),
-            minValue, maxValue);
+        uint8_t value = Utils::signalToImageValue(
+          thermal_signals.at(i * imageHeight_ + j), minValue, maxValue);
         thermalImage->data.push_back(value);
       }
     }
   }
 
-  void FlirLeptonHardwareInterface::fill_fusedMsg(
+
+
+  void FlirLeptonHardwareInterface::craftFusedMsg(
     const std::vector<uint16_t>& thermal_signals, 
-    distrib_msgs::flirLeptonMsg* flirMsg, 
-    uint16_t minValue, uint16_t maxValue)
+    distrib_msgs::flirLeptonMsg* flirMsg, uint16_t minValue, uint16_t maxValue)
   {
     flirMsg->header.stamp = now_;
     flirMsg->header.frame_id = frame_id_;
 
-    flirMsg->thermalImage.header.stamp = now_;
-    flirMsg->thermalImage.header.frame_id = frame_id_;
-    flirMsg->thermalImage.height = imageHeight_;
-    flirMsg->thermalImage.width = imageWidth_;
-    flirMsg->thermalImage.encoding = "mono8";
-    flirMsg->thermalImage.is_bigendian = 0;
-    flirMsg->thermalImage.step = imageWidth_ * sizeof(uint8_t);
-
-    // Thermal sensor_msgs/Image 
-    for (int i = 0; i < imageHeight_; i++) {
-      for (int j = 0; j < imageWidth_; j++) {
-        uint8_t value = signalToImageValue(thermal_signals.at(i * imageWidth_ + j),
-          minValue, maxValue);
-        flirMsg->thermalImage.data.push_back(value);
-      }
-    }
-  
+    craftImageMsg(thermal_signals, &flirMsg->thermalImage, minValue, maxValue);
+     
     // Vector containing the temperatures in image after calibration and vector
     // with signal raw values 
     for (int i = 0; i < imageHeight_; i++) {
       for (int j = 0; j < imageWidth_; j++) {
-        flirMsg->rawValues.data.push_back(thermal_signals.at(i * imageWidth_ + j));
+        flirMsg->rawValues.data.push_back(thermal_signals.at(
+            i * imageWidth_ + j));
 
-        float value = signalToTemperature(thermal_signals.at(i * imageWidth_ + j));
+        float value = Utils::signalToTemperature(
+          thermal_signals.at(i * imageWidth_ + j), calibMap_);
         flirMsg->temperatures.data.push_back(value);
        
       }
@@ -287,178 +293,53 @@ namespace flir_lepton
     flirMsg->temperatures.layout.dim[1].size = 80;
   }
 
-  float FlirLeptonHardwareInterface::signalToTemperature(uint16_t signalValue)
-  {
-    // The input signalValue is the keyword of the map with temperatures
-    std::map<uint16_t, float>::iterator search = dataMap_.find(signalValue);
-    float give_temp;
-
-    if(search != dataMap_.end())
-    {
-      // Pass the value from the map
-      give_temp = search->second;
-    }
-    else
-    {
-      give_temp = 0;
-    }
-    
-    return give_temp;    
-  }
 
 
-  /*!
-   * @brief Loads the temperature-raw_signal_values relation from the dataset 
-   *  file.
-   *  @return A map which containes temperature-signal indexes
-   */
-  std::map<uint16_t, float> FlirLeptonHardwareInterface::fillCalibrationMap(void)
-  {
-    char* dataset_uri = new char[128];
-    std::string param;
-
-    /* ---< Load dataset file from parameter server >--- */
-    //nh_.getParam("dataset/spline_interpolated_data", param);
-    nh_.param<std::string>("dataset/spline_interpolated_data", param, 
-      "/home/pandora/pandora_ws/src/rpi_hardware_interface/data" \
-      "/flir_lepton/dataset_spline_interp.pandora");
-
-    strcpy(dataset_uri, param.c_str());
-    /* ---< Open a file input stream to read the dataset >--- */
-    std::ifstream file(dataset_uri);
-    std::string line;
-    
-    std::map<uint16_t, float> dataMap;
-
-    // Value to be stored in map and its name in the file that we read
-    float value = 0;
-    uint16_t keyword = 0;
-    std::string value_s;
-    std::string keyword_s;
-    std::istringstream ss;
-
-    // If counter even -> read keyword of map from file
-    // If counter odd -> read value of map from file
-    int counter =2;
-    
-    if(file.is_open())
-    {
-      while(getline(file, line))
-      {
-        if(counter % 2 == 0)
-        { 
-          // Read the keyword of map and convert it to uint16_t
-          keyword_s = line;
-          
-          std::istringstream ss(keyword_s);
-          ss >> keyword;
-
-         if(ss.fail())
-         {
-           ROS_ERROR("Failed to read thermal-signal dataset");
-           exit(1);
-         }
-        }
-        else
-        {
-          value_s = line;
-
-          // Convert string to float for map
-          std::istringstream ss(value_s);
-          ss >> value;
-
-          if(ss.fail())
-          {
-            ROS_ERROR("Failed to read thermal-signal dataset");
-            exit(1);
-          }
-          // Fill the map with the next pair
-          dataMap[keyword] = value;
-        }
-        counter++;
-      }
-      file.close();
-    }
-    else
-    {
-      ROS_ERROR("Failed to open file");
-      exit(1);
-    }
-    // Check if map size is ok
-    //ROS_INFO_STREAM("MAP SIZE =" << dataMap.size());
-    return dataMap;
-  }
-
-
-  /*!
-   * @brief Converts signal values to raw_image values.
-   * @param signal signal value
-   * @param minVal Minimun signal value captured on a thermal image frame.
-   * @param maxVal Maximum signal value captured on a thermal image frame.
-   * @return raw_image value.
-   */
-  uint8_t FlirLeptonHardwareInterface::signalToImageValue(uint16_t signal,
-    uint16_t minVal, uint16_t maxVal)
-  {
-    uint16_t imageValue;
-    uint16_t diff;
-    float scale;
-    diff = maxVal - minVal;
-    scale = (float)255/diff;
-    imageValue = (float)(signal - minVal)*scale;
-    return (uint8_t) imageValue;
-  }
-
-
-  /*!
-   * @brief Opens communication port to flirlepton sensor
-   * @return Void.
-   */
   void FlirLeptonHardwareInterface::openDevice(void)
   {
-    spiDevice_ = open(device_.c_str(), O_RDWR);
-    if (spiDevice_ < 0)
+    flirSpi_.handler = open(device_.c_str(), O_RDWR);
+    if (flirSpi_.handler < 0)
     {
       ROS_FATAL("[Flir-Lepton]: Can't open SPI device");
       exit(1);
     }
 
-    statusValue_ = ioctl(spiDevice_, SPI_IOC_WR_MODE, &flirSpi_.mode);
+    statusValue_ = ioctl(flirSpi_.handler, SPI_IOC_WR_MODE, &flirSpi_.mode);
     if (statusValue_ < 0)
     {
       ROS_FATAL("[Flir-Lepton]: Can't set SPI-mode (WR)...ioctl failed");
       exit(1);
     }
 
-    statusValue_ = ioctl(spiDevice_, SPI_IOC_RD_MODE, &flirSpi_.mode);
+    statusValue_ = ioctl(flirSpi_.handler, SPI_IOC_RD_MODE, &flirSpi_.mode);
     if (statusValue_ < 0)
     {
       ROS_FATAL("[Flir-Lepton]: Can't set SPI-mode (RD)...ioctl failed");
       exit(1);
     }
 
-    statusValue_ = ioctl(spiDevice_, SPI_IOC_WR_BITS_PER_WORD, &flirSpi_.bits);
+    statusValue_ = ioctl(flirSpi_.handler, SPI_IOC_WR_BITS_PER_WORD, &flirSpi_.bits);
     if (statusValue_ < 0)
     {
       ROS_FATAL("[Flir-Lepton]: Can't set SPI bitsperWord (WD)...ioctl failed");
       exit(1);
     }
 
-    statusValue_ = ioctl(spiDevice_, SPI_IOC_RD_BITS_PER_WORD, &flirSpi_.bits);
+    statusValue_ = ioctl(flirSpi_.handler, SPI_IOC_RD_BITS_PER_WORD, &flirSpi_.bits);
     if (statusValue_ < 0)
     {
       ROS_FATAL("[Flir-Lepton]: Can't set SPI bitsperWord (RD)...ioctl failed");
       exit(1);
     }
 
-    statusValue_ = ioctl(spiDevice_, SPI_IOC_WR_MAX_SPEED_HZ, &flirSpi_.speed);
+    statusValue_ = ioctl(flirSpi_.handler, SPI_IOC_WR_MAX_SPEED_HZ, &flirSpi_.speed);
     if (statusValue_ < 0)
     {
       ROS_FATAL("[Flir-Lepton]: Can't set SPI speed (WD)...ioctl failed");
       exit(1);
     }
 
-    statusValue_ = ioctl(spiDevice_, SPI_IOC_RD_MAX_SPEED_HZ, &flirSpi_.speed);
+    statusValue_ = ioctl(flirSpi_.handler, SPI_IOC_RD_MAX_SPEED_HZ, &flirSpi_.speed);
     if (statusValue_ < 0)
     {
       ROS_FATAL("[Flir-Lepton]: Can't set SPI speed (RD)...ioctl failed");
@@ -467,13 +348,11 @@ namespace flir_lepton
     ROS_WARN("[Flir-Lepton]: Opened SPI Port");
   }
 
-  /*!
-   * @brief Closes communication port to flir-lepton sensor
-   * @return Void
-   */
+
+
   void FlirLeptonHardwareInterface::closeDevice(void)
   {
-    statusValue_ = close(spiDevice_);
+    statusValue_ = close(flirSpi_.handler);
     if (statusValue_ < 0)
     {
       ROS_FATAL("[Flir-Lepton]: Could not close SPI device");
