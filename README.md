@@ -47,7 +47,7 @@ net.ipv4.ip_forward = 1
 sysctl -p /etc/sysctl.conf
 ```
 
-####POSTROUTING configurations
+#### POSTROUTING configurations
 In order to enable NAT in the kernel, run the following commands:
 ```bash
 sudo iptables -t nat -A POSTROUTING -o wlan0 -j MASQUERADE
@@ -68,21 +68,29 @@ up iptables-restore < /etc/iptables.ipv4.nat
 These configurations allows raspberry to also connect to the internet provided 
 by the host-PC's wlan0 interface.
 
-####Configure ROS_MASTER to run on wlan0 interface - Host PC
-Source the **pc_ros_network_config.sh** bash script, located in the scripts/ directory,
-in order to configure the ROS_MASTER_URI and ROS_IP env-variables.
+##### Install pigpio
+camera_effector ros package dependency.
+
+- Fetch pigpio sources:
+
 ```bash
-source pc_ros_network_config.sh
+wget abyz.co.uk/rpi/pigpio/pigpio.zip
 ```
 
-The current script automatically finds the pc's IP address on wlan0 interface
-and applies it to the ROS_MASTER_URI and ROS_IP environmental variables.
+- Unzip it:
 
-###ROS over ethernet configurations on raspberry-PI2 
-Source the **rpi_ros_network_config.sh** bash script, located in the scripts/ directory, 
-with the host-PC's IP-address on wlan0 interface as input parameter.
-For example, if the host-PC has the IP-address, **192.168.0.117**, for the wlan0 
-interface, then run the following command on the raspberry-PI2 device:
 ```bash
-source rpi_ros_network_config 192.168.0.117
+unzip pigpio.zip
+```
+
+- Build:
+
+```bash
+cd PIGPIO && make
+```
+
+- Install:
+
+```bash
+make install
 ```
