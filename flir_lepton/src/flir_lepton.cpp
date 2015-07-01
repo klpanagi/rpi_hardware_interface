@@ -69,7 +69,7 @@ namespace flir_lepton
     calibMap_ = Utils::loadThernalCalibMap(calibFileUri_);
 
     openDevice();
-    fusedMsg_publisher_ = nh_.advertise<distrib_msgs::flirLeptonMsg>(
+    fusedMsg_publisher_ = nh_.advertise<distrib_msgs::FlirLeptonMsg>(
       fusedMsg_topic_, 1);
     image_publisher_ = nh_.advertise<sensor_msgs::Image>(image_topic_, 1);
   }
@@ -149,7 +149,7 @@ namespace flir_lepton
     sensor_msgs::Image thermalImage;
 
     // Custom message
-    distrib_msgs::flirLeptonMsg fusedMsg;
+    distrib_msgs::FlirLeptonMsg fusedMsg;
 
     // Create the Image message
     craftImageMsg(thermal_signals_, &thermalImage, minValue, maxValue);
@@ -266,7 +266,7 @@ namespace flir_lepton
 
   void FlirLeptonHardwareInterface::craftFusedMsg(
     const std::vector<uint16_t>& thermal_signals, 
-    distrib_msgs::flirLeptonMsg* flirMsg, uint16_t minValue, uint16_t maxValue)
+    distrib_msgs::FlirLeptonMsg* flirMsg, uint16_t minValue, uint16_t maxValue)
   {
     flirMsg->header.stamp = now_;
     flirMsg->header.frame_id = frame_id_;

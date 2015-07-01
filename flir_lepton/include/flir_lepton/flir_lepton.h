@@ -36,6 +36,7 @@
  * *  Tsirigotis Christos
  * * Maintainer: Konstantinos Panayiotou
  * * Email: klpanagi@gmail.com
+ * *
  * *********************************************************************/
 
 #ifndef FLIR_LEPTON_FLIR_LEPTON_H
@@ -54,7 +55,7 @@
 /* ---< ROS related >--- */
 #include "ros/ros.h"
 #include "sensor_msgs/Image.h"
-#include "distrib_msgs/flirLeptonMsg.h"
+#include "distrib_msgs/FlirLeptonMsg.h"
 /* --------------------- */
 
 namespace flir_lepton
@@ -147,7 +148,7 @@ namespace flir_lepton
       * @brief Fills Thermal fused ros message
       */
       void craftFusedMsg(const std::vector<uint16_t>& thermal_signals,
-        distrib_msgs::flirLeptonMsg* flirMsg, uint16_t minValue, 
+        distrib_msgs::FlirLeptonMsg* flirMsg, uint16_t minValue, 
         uint16_t maxValue);
 
 
