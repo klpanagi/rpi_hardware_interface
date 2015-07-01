@@ -101,8 +101,7 @@ class ServoController:
         except:
             e = sys.exc_info()[0]
             rospy.logfatal(\
-                "[Servo-Controller]: Failed to set servo [%s] mode", \
-                % servo_id)
+                "[Servo-Controller]: Failed to set servo [%s] mode", servo_id)
             rospy.logfatal(e)
             return False
         finally:

@@ -1,7 +1,7 @@
 <package format="2">
-  <name>camera_effector</name>
+  <name>camera_effector_teleop</name>
   <version>0.0.0</version>
-  <description>The camera_effector package</description>
+  <description>The camera_effector_teleop package</description>
 
   <maintainer email="klpanagi@gmail.com">Konstantinos Panayiotou</maintainer>
 
@@ -13,13 +13,13 @@
   <author email="klpanagi@gmail.com">Konstantinos Panayiotou</author>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>message_generation</build_depend>
+  <!--<build_depend>message_generation</build_depend>-->
   <exec_depend>message_runtime</exec_depend>
 
+  <depend>roscpp</depend>
   <depend>std_msgs</depend>
-  <depend>sensor_msgs</depend>
-  <depend>rospy</depend>
-  <depend>pigpio</depend>
+  <depend>geometry_msgs</depend>
+  <depend>boost</depend>
 
 
   <export>
