@@ -8,7 +8,7 @@ thermal_image:
   width: 80
 flir_spi:
   bits: 8
-  speed: 24000000
+  speed: 16000000
   delay: 0
   packet_size: 164
   packets_per_frame: 60

@@ -61,7 +61,7 @@ namespace flir_lepton
     device_("/dev/spidev0.0"),
     image_encoding_("mono8"),
     MAX_RESETS_ERROR(750),
-    MAX_RESTART_ATTEMPS_EXIT(20)
+    MAX_RESTART_ATTEMPS_EXIT(5)
   {
     loadParameters();
     frame_buffer_ = flirSpi_.makeFrameBuffer();
