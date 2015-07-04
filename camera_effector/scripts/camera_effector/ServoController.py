@@ -43,6 +43,7 @@ import rospy
 import pigpio
 import math
 import sys
+import time
 
 
 
@@ -86,7 +87,7 @@ class ServoController:
     def register_servo(self, servo_id, pin):
         self.registered_servos_.append(servo_id)
         self.servo_pin_[servo_id] = pin
-        self.servo_pos_[servo_id] = None
+        self.servo_pos_[servo_id] = 0 + self.servo_error_degrees_
         self.servo_vel_[servo_id] = None
     # ======================================================================= #
 
@@ -146,6 +147,11 @@ class ServoController:
         degrees_no_error = degrees - self.servo_error_degrees_
         pulse_width = self.degrees_to_dutyCycle(degrees_no_error)
 
+        current_pos = self.degrees_to_dutyCycle(self.servo_pos_[servo_id])
+        next_pos = pulse_width
+        rospy.loginfo("current_pos: %s , next_pos: %s",\
+        current_pos, next_pos)
+
         try:
             self.gpio_.set_servo_pulsewidth(self.servo_pin_[servo_id], \
                 pulse_width)
@@ -160,7 +166,7 @@ class ServoController:
                     "Setting servo [%s] position (Absolute Values):" + \
                     " Pos_Degrees: %s,   Duty_Cycle: %s" \
                     %(servo_id, degrees, pulse_width) )
-            self.servo_pos_[servo_id] = degrees
+            self.servo_pos_[servo_id] = degrees_no_error
             return True
     # ======================================================================= #
 
@@ -172,6 +178,10 @@ class ServoController:
         off = 0;
         pin = self.servo_pin_[servo_id]
         try:
+            #self.gpio_.set_servo_pulseWidth(\
+            #    self.base_positions_['neutral'])
+            self.set_pos_degrees(servo_id, 0)
+            time.sleep(1)
             self.gpio_.set_servo_pulsewidth(pin, off)
         except:
             e = sys.exc_info()[0]

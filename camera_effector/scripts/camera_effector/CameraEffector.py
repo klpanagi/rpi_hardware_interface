@@ -60,6 +60,9 @@ class CameraEffector:
         self.subscribers_ = {}
         self.pos_limits_ = {}
         self.offsets_ = {}
+        self.camera_orientation_ = {}
+        self.camera_orientation_['pan'] = None
+        self.camera_orientation_['tilt'] = None
 
         # --------------------- Load parameters ---------------------- #
         self.joint_states_topic_ = rospy.get_param( \
@@ -82,14 +85,14 @@ class CameraEffector:
         self.offsets_['pan'] = rospy.get_param(
             '~pan_joint/offset', 0)
         self.offsets_['tilt'] = rospy.get_param(
-            '~tilt_joint/offset', 34.3775)
+            '~tilt_joint/offset', -0.1920)  # 11 degrees
 
-        max_pos = rospy.get_param('~tilt_joint/limits/max', 60)
-        min_pos = rospy.get_param('~tilt_joint/limits/min', 60)
+        max_pos = rospy.get_param('~tilt_joint/limits/max', 0)
+        min_pos = rospy.get_param('~tilt_joint/limits/min', 0)
         self.pos_limits_['tilt'] = {'max': max_pos, 'min': min_pos}
 
-        max_pos = rospy.get_param('~pan_joint/limits/max', 60)
-        min_pos = rospy.get_param('~pan_joint/limits/min', 60)
+        max_pos = rospy.get_param('~pan_joint/limits/max', 0)
+        min_pos = rospy.get_param('~pan_joint/limits/min', 0)
         self.pos_limits_['pan'] = {'max': max_pos, 'min': min_pos}
         # ------------------------------------------------------------ #
 
@@ -156,37 +159,6 @@ class CameraEffector:
     # ======================================================================= #
 
 
-    ##
-    #  Transforms from camera joint to servo joint angle.
-    #  @param angle Camera joint angle value
-    #
-    def camera_to_servo_transform(self, angle):
-        # ---< Constant facotrs >--- #
-        A = 32  
-        B = 13
-        r1 = 10
-        r2 = 30
-        r3 = 12
-        # -------------------------- #
-
-        y2 = 1.0 * math.cos(angle) * r3
-        x2 = 1.0 * math.sin(angle) * r3
-        y1 = B - y2
-        x1 = A + x2
-
-        temp = 1.0 * x1 / y1
-        fi_angle = math.atan(temp)
-
-        p = 1.0 * x1 / math.sin(fi_angle)
-
-        temp = 1.0 * (1.0 * r1 * r1 + 1.0 * p * p - 1.0 * r2 * r2) \
-            / (2.0 * r1 * p)
-        r1p_angle = math.acos(temp)
-
-        theta = fi_angle - r1p_angle
-        return theta
-    # ========================================================================
-
 
     ##
     #  Command servo to move at given angle
@@ -226,16 +198,21 @@ class CameraEffector:
 
         # ---< Used mainly for debug purposes >--- #
         degrees = self.servo_ctrl_.radians_to_degrees(rad)
-        rospy.loginfo("[%s servo]:  Commanding camera at angle --> %s radians,  %s degrees" % \
+        rospy.loginfo(\
+            "[%s servo]: Commanding camera at angle: %s radians, %s degrees" % \
             (servo_id, rad, degrees))
         rad -= self.offsets_[servo_id]
+
         #  ** Use the transformatio function to transform camera joint angle to 
         #  ** servo joint angle.
         if servo_id == 'tilt':
-            rad = self.camera_to_servo_transform(rad)
+            pass
+            #rad = self.camera_to_servo_transform(rad)
+
         degrees = self.servo_ctrl_.radians_to_degrees(rad)
-        rospy.loginfo("[%s servo]: Angle command to servo: %s degrees ,  %s radians" % \
-            (servo_id, rad, degrees))
+        rospy.loginfo(\
+            "[%s servo]: Commanding servo at angle: %s degrees , %s radians" % \
+            (servo_id, degrees, rad))
         # --------------------------------------- #
         self.servo_ctrl_.set_pos_degrees(servo_id, degrees)
         return 1
@@ -246,16 +223,68 @@ class CameraEffector:
     #  Read from ServoController and Publish
     #
     def read(self):
+        self.update_camera_orientation()
         current_time_stamp = rospy.Time.now()
         # position[0]==<position['pan']> , position[1]==<position['tilt']>
-        self.joint_state_msg_.position[0] = \
-            self.servo_ctrl_.get_pos_rad('pan') + \
-            self.servo_ctrl_.degrees_to_radians(self.offsets_['pan'])
-        self.joint_state_msg_.position[1] = \
-            self.servo_ctrl_.get_pos_rad('tilt') + \
-            self.servo_ctrl_.degrees_to_radians(self.offsets_['tilt'])
+        self.joint_state_msg_.position[0] = self.camera_orientation_['pan']
+        self.joint_state_msg_.position[1] = self.camera_orientation_['tilt']
         self.joint_state_msg_.header.stamp = current_time_stamp
         self.joint_state_pub_.publish(self.joint_state_msg_)
     # ======================================================================= #
 
+
+    ##
+    #  Update Camera Orientation 
+    #
+    def update_camera_orientation(self):
+        servo_pos = {}
+        servo_pos['pan'] = self.servo_ctrl_.get_pos_rad('pan')
+        servo_pos['tilt'] = self.servo_ctrl_.get_pos_rad('tilt')
+
+        self.camera_orientation_['pan'] = servo_pos['pan'] + \
+          self.offsets_['pan']
+
+        self.camera_orientation_['tilt'] = servo_pos['tilt'] + \
+          self.offsets_['tilt']
+    # ======================================================================= #
+
+
+    ##
+    #  Default destructor
+    #
+    def __del__(self):
+        del self.servo_ctrl_
+    # ======================================================================= #
+
+
+    ##
+    #  Transforms from camera joint to servo joint angle.
+    #  @param angle Camera joint angle value
+    #
+    def camera_to_servo_transform(self, angle):
+        # ---< Constant facotrs >--- #
+        A = 32  
+        B = 13
+        r1 = 10
+        r2 = 30
+        r3 = 12
+        # -------------------------- #
+
+        y2 = 1.0 * math.cos(angle) * r3
+        x2 = 1.0 * math.sin(angle) * r3
+        y1 = B - y2
+        x1 = A + x2
+
+        temp = 1.0 * x1 / y1
+        fi_angle = math.atan(temp)
+
+        p = 1.0 * x1 / math.sin(fi_angle)
+
+        temp = 1.0 * (1.0 * r1 * r1 + 1.0 * p * p - 1.0 * r2 * r2) \
+            / (2.0 * r1 * p)
+        r1p_angle = math.acos(temp)
+
+        theta = fi_angle - r1p_angle
+        return theta
+    # ========================================================================
 

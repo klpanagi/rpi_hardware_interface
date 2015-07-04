@@ -1,5 +1,5 @@
 published_topics:
-  camera_effector_joint_states: /camera_effetor/joint_states
+  camera_effector_joint_states: /camera_effector/joint_states
 
 pan_joint:
   joint_name: camera_effector_pan_joint
@@ -16,7 +16,7 @@ tilt_joint:
   limits:
     max: 0.6
     min: -0.6
-  offset: 0.65
+  offset: -0.1920
   servo:
     name: tilt
     pin: 18
