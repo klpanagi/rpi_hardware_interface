@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ledstrip_switch</name>
+  <version>0.0.0</version>
+  <description>The ledstrip_switch package</description>
+
+  <maintainer email="gkouros@yahoo.gr">George Kouros</maintainer>
+
+  <license>TODO</license>
+
+  <author email="gkourosg@yahoo.gr">George Kouros</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>rospy</depend>
+  <depend>state_manager_msgs</depend>
+  <depend>std_msgs</depend>
+
+  <export>
+  </export>
+</package>
