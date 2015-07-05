@@ -5,22 +5,21 @@
     name="camera_effector"
     pkg="camera_effector" 
     type="camera_effector_node.py" 
-    output="screen" 
-  />
+    output="screen" >
 
+    <!-- Load configuration parameters yaml -->
+    <rosparam 
+      file="$(find camera_effector)/config/camera_effector.yaml"
+      command="load" 
+    />
 
-  <!-- Load configuration parameters yaml -->
-  <rosparam 
-    file="$(find camera_effector)/config/camera_effector.yaml"
-    command="load" 
-    ns="camera_effector" 
-  />
+  </node>
 
   <!-- Load configuration parameters yaml -->
   <rosparam 
     file="$(find camera_effector)/config/servo_controller.yaml"
     command="load" 
-    ns="servo_controller" 
+    ns="/servo_controller" 
   />
 
 </launch>
