@@ -1,0 +1,13 @@
+<launch>
+
+
+  <node 
+    name="camera_effector"
+    pkg="camera_effector"
+    type="camera_effector_teleop"
+    output="screen"
+  />
+
+
+
+</launch>

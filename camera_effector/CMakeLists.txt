@@ -3,6 +3,7 @@ project(camera_effector)
 
 find_package(catkin REQUIRED COMPONENTS
   rospy
+  roscpp
   std_msgs
   sensor_msgs
 )
@@ -10,36 +11,38 @@ find_package(catkin REQUIRED COMPONENTS
 # --- For python camera_effector package --- #
 catkin_python_setup()
 
+#######################################################
+#              Camera Effector Teleop                 #
+#######################################################
 
-#catkin_package(
-  #INCLUDE_DIRS
-    #include
-  #CATKIN_DEPENDS
-    #message_runtime
-    #rospy
-    #std_msgs
-  #DEPENDS system_lib
-#)
-
-#include_directories(
-  #include
-  #${catkin_INCLUDE_DIRS}
-#)
+find_package(Curses)
 
 
-#add_library(${PROJECT_NAME}_lib
-  #src/camera_effector.cpp
-  #)
-#target_link_libraries(${PROJECT_NAME}_lib
-  #pthread
-  #${catkin_LIBRARIES}
-#)
+catkin_package(
+  CATKIN_DEPENDS
+    message_runtime
+    roscpp
+    std_msgs
+    geometry_msgs
+  DEPENDS
+    system_lib
+    Curses
+)
 
 
-#add_executable(${PROJECT_NAME}_node
-  #src/camera_effector_node.cpp
-  #)
-#target_link_libraries(${PROJECT_NAME}_node
-  #${catkin_LIBRARIES}
-  #${PROJECT_NAME}_lib
-  #)
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+)
+
+
+add_executable(${PROJECT_NAME}_teleop
+  src/camera_effector_teleop/camera_effector_teleop.cpp
+)
+
+
+target_link_libraries(${PROJECT_NAME}_teleop
+  ${catkin_LIBRARIES}
+  ${CURSES_LIBRARY}
+)
+

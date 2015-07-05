@@ -1,6 +1,6 @@
 <launch>
 
-  <!-- PIcamera node -->
+  <!-- Camera Effector node -->
   <node 
     name="camera_effector"
     pkg="camera_effector" 
