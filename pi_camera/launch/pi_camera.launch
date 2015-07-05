@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <launch>
 
   <!-- PIcamera node -->
@@ -6,14 +7,14 @@
     name="pi_camera"
     pkg="pi_camera" 
     respawn="true" 
-    output="screen" 
-  />
+    output="screen" >
 
-  <rosparam
-    file="$(find pi_camera)/config/params.yaml"
-    command="load"
-    ns="pi_camera"
-  />
+    <rosparam
+      file="$(find pi_camera)/config/params.yaml"
+      command="load"
+    />
+  
+  </node>
 
 
 </launch>

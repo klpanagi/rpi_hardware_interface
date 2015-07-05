@@ -1,5 +1,5 @@
+<?xml version="1.0"?>
 <launch>
-
 
   <node 
     name="camera_effector"
@@ -7,7 +7,6 @@
     type="camera_effector_teleop"
     output="screen"
   />
-
 
 
 </launch>
