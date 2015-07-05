@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <launch>
+  <arg name="namespace" default="ledstrip_controller" />
 
   <node
     type="ledstrip_controller.py"

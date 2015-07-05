@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <launch>
-
+  <arg name="namespace" default="camera_effector" />
+  
   <!-- Camera Effector node -->
   <node 
     name="camera_effector"

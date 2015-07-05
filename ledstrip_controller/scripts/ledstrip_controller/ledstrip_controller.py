@@ -85,7 +85,8 @@ class LedstripController():
     # ---------------------------------------------------------- #
 
     # Start Publishing timer 
-    rospy.Timer(rospy.Duration(1.0), self.publish_led_state_callback, oneshot=False)
+    rospy.Timer(rospy.Duration(float(1/self.pub_rate_)), \
+            self.publish_led_state_callback, oneshot=False)
 
 
   ##

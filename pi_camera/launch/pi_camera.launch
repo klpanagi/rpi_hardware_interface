@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <launch>
+  <arg name="namespace" default="pi_camera"/>
 
   <!-- PIcamera node -->
   <node 
