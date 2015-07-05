@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>ledstrip_switch</name>
+  <name>ledstrip_controller</name>
   <version>0.0.0</version>
-  <description>The ledstrip_switch package</description>
+  <description>The ledstrip_controller package</description>
 
   <maintainer email="gkouros@yahoo.gr">George Kouros</maintainer>
+  <author email="klpanagi@gmail.com">Konstantinos Panayiotou</author>
 
   <license>TODO</license>
 
@@ -13,8 +14,8 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>rospy</depend>
-  <depend>state_manager_msgs</depend>
   <depend>std_msgs</depend>
+  <depend>state_manager_msgs</depend>
 
   <export>
   </export>

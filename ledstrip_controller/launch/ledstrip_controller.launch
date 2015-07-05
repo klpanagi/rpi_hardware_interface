@@ -1,0 +1,19 @@
+<launch>
+
+  <node
+    type="ledstrip_controller.py"
+    name="ledstrip_controller"
+    pkg="ledstrip_controller"
+    respawn="true"
+    output="screen" >
+
+    <rosparam
+      file="$(find ledstrip_controller)/config/params.yaml"
+      command="load"
+    />
+
+  </node>
+    
+
+
+</launch>
