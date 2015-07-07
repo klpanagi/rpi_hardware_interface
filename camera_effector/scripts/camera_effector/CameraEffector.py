@@ -76,9 +76,9 @@ class CameraEffector:
             '~camera_effector_urdf/camera_effector_frame', \
             '/camera_effector_frame')
         self.subscribers_['pan_command'] = rospy.get_param( \
-            '~subscribers/pan_command', '/camera_effector/pan_command')
+            '~subscribed_topics/pan_command', '/camera_effector/pan_command')
         self.subscribers_['tilt_command'] = rospy.get_param( \
-            '~subscribers/tilt_command', '/camera_effector/tilt_command')
+            '~subscribed_topics/tilt_command', '/camera_effector/tilt_command')
                 
         pan_servo_pin = rospy.get_param('~/pan_joint/servo/pin', 17)
         tilt_servo_pin = rospy.get_param('~/tilt_joint/servo/pin', 18)
@@ -87,12 +87,12 @@ class CameraEffector:
         self.offsets_['tilt'] = rospy.get_param(
             '~tilt_joint/offset', -0.1920)  # 11 degrees
 
-        max_pos = rospy.get_param('~tilt_joint/limits/max', 0)
-        min_pos = rospy.get_param('~tilt_joint/limits/min', 0)
+        max_pos = rospy.get_param('~tilt_joint/limits/max', 1.3962)
+        min_pos = rospy.get_param('~tilt_joint/limits/min', -1.3962)
         self.pos_limits_['tilt'] = {'max': max_pos, 'min': min_pos}
 
-        max_pos = rospy.get_param('~pan_joint/limits/max', 0)
-        min_pos = rospy.get_param('~pan_joint/limits/min', 0)
+        max_pos = rospy.get_param('~pan_joint/limits/max', 0.6)
+        min_pos = rospy.get_param('~pan_joint/limits/min', -0.6)
         self.pos_limits_['pan'] = {'max': max_pos, 'min': min_pos}
         # ------------------------------------------------------------ #
 

@@ -24,6 +24,6 @@ tilt_joint:
 camera_effector_urdf:
   camera_effector_frame: /camera_effector_frame
 
-subscribers:
+subscribed_topics:
   pan_command: /camera_effector/pan_command
   tilt_command: /camera_effector/tilt_command

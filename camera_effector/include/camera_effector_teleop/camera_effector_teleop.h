@@ -41,9 +41,102 @@
 #ifndef CAMERA_EFFECTOR_TELEOP_CAMERA_EFFECTOR_TELEOP_H
 #define CAMERA_EFFECTOR_TELEOP_CAMERA_EFFECTOR_TELEOP_H
 
-namespace camera_effector_teleop
+#include <cstring>
+#include "ros/ros.h"
+#include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
+
+namespace camera_effector
 {
 
+  #define KEY_SPACEBAR 32
+  #define KEY_ENTER 10
+  #define KEY_ESCAPE 27
+  #define KEY_A 97
+  #define KEY_B 98
+  #define KEY_C 99
+  #define KEY_D 100
+  #define KEY_E 101
+  #define KEY_F 102
+  #define KEY_G 103
+  #define KEY_H 104
+  #define KEY_I 105
+  #define KEY_J 106
+  #define KEY_K 107
+  #define KEY_L 108
+  #define KEY_M 109
+  #define KEY_N 110
+  #define KEY_O 111
+  #define KEY_P 112
+  #define KEY_Q 113
+  #define KEY_R 114
+  #define KEY_S 115
+  #define KEY_T 116
+  #define KEY_U 117
+  #define KEY_V 118
+  #define KEY_W 119
+  #define KEY_X 120
+  #define KEY_Y 121
+  #define KEY_Z 122
+
+
+  class Teleoperation
+  {
+    public:
+
+      /*!
+       *  Default Constructor
+       */
+      Teleoperation(const std::string& _nh_namespace);
+
+      /*!
+       *  Default Destructor
+       */
+      virtual ~Teleoperation(void);
+
+      void cmdTilt(double cmd);
+
+      void cmdPan(double cmd);
+
+
+      /*!
+       * @brief Publish current command values.
+       * @return void.
+       */
+      virtual void publish(void);
+
+      virtual void captureArrowInput(void);
+
+
+      /*!
+       * @brief Crear/Flush ostringstream contents.
+       * @param sstr std::ostringstream pointer to clear.
+       * @return void.
+       */
+      void clear_osstr(std::ostringstream* sstr);
+
+      virtual std::string craftHeader(void);
+
+    private:
+      ros::NodeHandle nh_;
+      ros::Rate pub_rate_;
+
+      double pan_limits_[2];
+      double tilt_limits_[2];
+      int step_;
+
+      double pan_current_pos_;
+      double tilt_current_pos_;
+
+      std::string topic_pan_cmd_;
+      std::string topic_tilt_cmd_;
+      ros::Publisher pan_pub_;
+      ros::Publisher tilt_pub_;
+
+      boost::thread key_thread_;
+      boost::thread pub_thread_;
+      //boost ::mutex lock_;
+  }; 
 
 }
 

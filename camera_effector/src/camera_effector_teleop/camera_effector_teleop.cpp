@@ -38,116 +38,209 @@
  * *
  * *********************************************************************/
 
-#include "ros/ros.h"
-
 #include "camera_effector_teleop/camera_effector_teleop.h"
 
-#include <ros/ros.h>
-#include <boost/thread.hpp>
-#include <boost/thread/mutex.hpp>
-#include <geometry_msgs/Twist.h>
 #include <signal.h>
-//#include <stdio.h>
 #include <iostream>
 #include <curses.h> 
+#include "std_msgs/Float64.h"
+#include <sstream>
 
-
-class Teleoperation
+namespace camera_effector
 {
-  public:
-    Teleoperation(double max_linear = 0.5, double max_angular = 0.8);
-    ~Teleoperation(void);
-    double getLinearScale(void);
-    double getAngularScale(void);
-    void publishTwist(void);
-    void captureArrowInput(void);
 
-  private:
-    ros ::NodeHandle nh_;
-    double linear_, linear_scale_;
-    double angular_, angular_scale_;
-    ros ::Publisher twist_pub_;
-    boost ::thread pub_thread_;
-    boost ::mutex lock_;
-};
-
-Teleoperation::Teleoperation(
-  double max_linear, double max_angular) :
-  linear_(0),
-  angular_(0),
-  linear_scale_(max_linear),
-  angular_scale_(max_angular)
-{
-  nh_.param("scale_linear", linear_scale_, linear_scale_);
-  nh_.param("scale_angular", angular_scale_, angular_scale_);
-  twist_pub_ = nh_.advertise < geometry_msgs::Twist > ("cmd_pos", 1);
-  pub_thread_ = boost::thread(&Teleoperation::publishTwist, this);
-}
-
-Teleoperation::~Teleoperation(void)
-{
-  pub_thread_.join();
-}
-
-double Teleoperation::getLinearScale(void)
-{
-  return linear_scale_;
-}
-
-double Teleoperation::getAngularScale(void)
-{
-  return angular_scale_;
-}
-
-void Teleoperation::publishTwist(void)
-{
-  geometry_msgs::Twist twist;
-  ros::Rate rate(100);
-  while (ros::ok)
+  Teleoperation::Teleoperation(const std::string& _nh_namespace):
+    nh_(_nh_namespace),
+    step_(1.0),
+    pub_rate_(10)
   {
-    twist.linear .x = linear_ * linear_scale_;
-    twist.angular .z = angular_ * angular_scale_;
-    {
-      boost::mutex::scoped_lock lock(lock_);
-      twist_pub_.publish(twist);
-    }
-    rate.sleep();
-  }
-}
+    nh_.param<double>("pan_joint/limits/min", pan_limits_[0], 1.3962);
+    nh_.param<double>("pan_joint/limits/max", pan_limits_[1], -1.3962);
 
-void Teleoperation::captureArrowInput(void)
-{
-  initscr();
-  noecho();
+    nh_.param<double>("tilt_joint/limits/min", tilt_limits_[0], 0.6);
+    nh_.param<double>("tilt_joint/limits/max", tilt_limits_[1], -0.6);
 
-  keypad ( stdscr, TRUE );
+    nh_.param<std::string>("subscribed_topics/pan_command", topic_pan_cmd_,
+      "/camera_effector/pan_command");
+    nh_.param<std::string>("subscribed_topics/tilt_command", topic_tilt_cmd_,
+      "/camera_effector/tilt_command");
 
-  while ( 1 )
-  {
-    switch ( getch() )
-    {
-      case KEY_UP:
-        printw ( "UP\n" );
-        break;
-      case KEY_DOWN:
-        printw ( "DOWN\n" );
-        break;
-      case KEY_LEFT:
-        printw ( "LEFT\n" );
-        break;
-      case KEY_RIGHT:
-        printw ( "RIGHT\n" );
-        break;
-    }
-    refresh();
+    pan_pub_ = nh_.advertise < std_msgs::Float64 > (topic_pan_cmd_, 1);
+    tilt_pub_ = nh_.advertise < std_msgs::Float64 > (topic_tilt_cmd_, 1);
+
+    pan_current_pos_ = 0;
+    tilt_current_pos_ = 0;
+    key_thread_ = boost::thread(&Teleoperation::captureArrowInput, this);
+    pub_thread_ = boost::thread(&Teleoperation::publish, this);
   }
 
-  endwin();
-}
+
+  /*!
+   *  Default Destructor
+   */
+  Teleoperation::~Teleoperation(void)
+  {
+    key_thread_.join();
+    pub_thread_.join();
+    endwin();
+  }
 
 
-void quit(int sig)
+  void Teleoperation::cmdPan(double cmd)
+  {
+    std_msgs::Float64 msg;
+    msg.data = cmd;
+    pan_pub_.publish(msg);
+  }
+
+
+  void Teleoperation::cmdTilt(double cmd)
+  {
+    std_msgs::Float64 msg;
+    msg.data = cmd;
+    tilt_pub_.publish(msg);
+  }
+
+
+  /*!
+   * @brief Crear/Flush ostringstream contents.
+   * @param sstr std::ostringstream pointer to clear.
+   * @return void.
+   */
+  void Teleoperation::clear_osstr(std::ostringstream* sstr)
+  {
+    sstr->str("");
+    sstr->flush();
+  }
+
+
+  std::string Teleoperation::craftHeader(void)
+  {
+    std::string header;
+    header = "=========================================================\n";
+    header += "             Camera_Effector_Teleoperation               \n";
+    header += "=========================================================\n";
+    header += "Usage: \r\n\r\n";
+    header += "Navigate camera effector by using the following keys:\n";
+    header += "[ARROW_UP]    --->  Possitive Tilt command\n";
+    header += "[ARROW_DOWN]  --->  Negative Tilt command\n";
+    header += "[ARROW_LEFT]  --->  Possitive Pan command\n";
+    header += "[ARROW_RIGHT] --->  Negative Pan command\n";
+    header += "\r\n\r\n";
+    
+    return header;
+  }
+
+
+  /*!
+   * @brief Publish current command values.
+   * @return void.
+   */
+  void Teleoperation::publish(void)
+  {
+    std_msgs::Float64 msg;
+    // Keep ros::ok in order to join thread on interrupt signal received
+    while ( ros::ok )
+    {
+      /* ----< Publish tilt pos >---- */
+      msg.data = pan_current_pos_;
+      pan_pub_.publish(msg);
+      /* ---------------------------- */
+
+      /* ----< Publish tilt pos >---- */
+      msg.data = tilt_current_pos_;
+      tilt_pub_.publish(msg);
+      /* ---------------------------- */
+      pub_rate_.sleep();
+    }
+  }
+
+
+  void Teleoperation::captureArrowInput(void)
+  {
+    double cmd = 0;
+    int key_pressed;
+    std::string header = craftHeader();
+    std::string msg;
+    std::ostringstream sstr; 
+
+    /* ---< Create new terminal window >--- */
+    //initscr();
+    newterm(getenv("TERM"), stdout, stdin);
+    noecho();
+    start_color();
+    keypad ( stdscr, TRUE );
+    attron(A_BLINK);
+    /* ------------------------------------ */
+
+    printw(header.c_str());
+
+    // Keep ros::ok in order to join thread on interrupt signal received
+    while ( ros::ok )
+    {
+      key_pressed = getch();
+      switch ( key_pressed )
+      {
+        case KEY_UP:
+          //printw ( "UP\n" );
+          tilt_current_pos_ += step_;
+          //cmd = tilt_current_pos_; 
+          //cmdTilt(cmd);
+          break;
+        case KEY_DOWN:
+          //printw ( "DOWN\n" );
+          tilt_current_pos_ -= step_;
+          //cmd = tilt_current_pos_; 
+          //cmdTilt(cmd);
+          break;
+        case KEY_LEFT:
+          //printw ( "LEFT\n" );
+          pan_current_pos_ += step_;
+          //cmd = pan_current_pos_; 
+          //cmdPan(cmd);
+          break;
+        case KEY_RIGHT:
+          //printw ( "RIGHT\n" );
+          pan_current_pos_ -= step_;
+          //cmd = pan_current_pos_; 
+          //cmdPan(cmd);
+          break;
+        case KEY_R:
+          pan_current_pos_ = 0;
+          tilt_current_pos_ = 0;
+          cmdPan(0);
+          cmdTilt(0);
+          break;
+        default:
+          break;
+      }
+
+      clear_osstr(&sstr);
+      sstr << pan_current_pos_;
+      msg = "Pan Position: " + sstr.str() + ", Tilt Position: ";
+      clear_osstr(&sstr);
+      sstr << tilt_current_pos_;
+      msg += sstr.str() + "\r";
+
+      clrtoeol();
+      printw(msg.c_str());
+      refresh();
+    }
+
+    endwin();
+  }
+
+} //namespace 
+
+
+using camera_effector::Teleoperation;
+
+Teleoperation* teleop;
+
+
+void int_signal_handler(int sig)
 {
+  delete teleop;
   ros::shutdown();
   exit(0);
 }
@@ -155,29 +248,14 @@ void quit(int sig)
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "teleoperation");
-  Teleoperation* teleoperation;
+  ros::init(argc, argv, "camera_effector_teleop");
 
-  if ( argc == 3 )
-  {
-    teleoperation = new Teleoperation(atof(argv[1]), atof(argv[2]));
-  }
-  else
-  {
-    teleoperation = new Teleoperation();
-
-    std ::cout << "---------------------\n"
-      << "Maximum linear velocity was not specified, defaults to "
-      << teleoperation->getLinearScale()
-      << " m/s.\n";
-    std ::cout << "---------------------\n"
-      << "Maximum angular velocity was not specified, defaults to "
-      << teleoperation->getAngularScale()
-      << " r/s.\n";
-  }
+  teleop = new Teleoperation("/camera_effector");
 
   // Catch program interrupt signal --> [C-c]
-  signal(SIGINT, quit);
-  //teleoperation->keyLoop();
+  signal(SIGINT, int_signal_handler);
+  //teleop->captureArrowInput();
+  ros::spin();
+
   return(0);
 }

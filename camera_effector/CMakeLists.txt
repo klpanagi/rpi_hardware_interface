@@ -16,7 +16,12 @@ catkin_python_setup()
 #######################################################
 
 find_package(Curses)
-
+set(CURSES_LIBRARY "/usr/lib/arm-linux-gnueabihf/libcurses.so")
+set(CURSES_INCLUDE_PATH "/usr/include")
+#find_package(PkgConfig REQUIRED)
+#pkg_check_modules(NCURSES REQUIRED ncurses)
+#set( CMAKE_INCLUDE_PATH "/usr/include")
+#set( CMAKE_LIBRARY_PATH "/usr/lib/arm-linux-gnueabihf")
 
 catkin_package(
   CATKIN_DEPENDS
