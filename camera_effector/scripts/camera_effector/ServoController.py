@@ -149,8 +149,9 @@ class ServoController:
 
         current_pos = self.degrees_to_dutyCycle(self.servo_pos_[servo_id])
         next_pos = pulse_width
-        rospy.loginfo("current_pos: %s , next_pos: %s",\
-        current_pos, next_pos)
+        if self.debug_:
+          rospy.loginfo("current_pos: %s , next_pos: %s",\
+          current_pos, next_pos)
 
         try:
             self.gpio_.set_servo_pulsewidth(self.servo_pin_[servo_id], \

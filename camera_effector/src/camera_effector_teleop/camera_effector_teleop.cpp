@@ -52,7 +52,7 @@ namespace camera_effector
   Teleoperation::Teleoperation(const std::string& _nh_namespace):
     nh_(_nh_namespace),
     step_(0.02),
-    pub_rate_(10)
+    pub_rate_(100)
   {
     nh_.param<double>("pan_joint/limits/min", pan_limits_[0], 1.3962);
     nh_.param<double>("pan_joint/limits/max", pan_limits_[1], -1.3962);
@@ -115,12 +115,16 @@ namespace camera_effector
     header = "=========================================================\n";
     header += "             Camera_Effector_Teleoperation               \n";
     header += "=========================================================\n";
+    header += "Initial key_press position step == 0.01 radians\r\n";
     header += "Usage: \r\n\r\n";
     header += "Navigate camera effector by using the following keys:\n";
     header += "[ARROW_UP]    --->  Possitive Tilt command\n";
     header += "[ARROW_DOWN]  --->  Negative Tilt command\n";
     header += "[ARROW_LEFT]  --->  Possitive Pan command\n";
     header += "[ARROW_RIGHT] --->  Negative Pan command\n";
+    header += "[r]  --->  Reset to origin position\n";
+    header += "[w]  --->  Increase key_press pos step by 0.01 radians\n";
+    header += "[s]  --->  Decrease key_press pos step by 0.01 radians\n";
     header += "\r\n\r\n";
     
     return header;
@@ -147,17 +151,25 @@ namespace camera_effector
   }
 
 
+  std::string Teleoperation::intToStr(double value)
+  {
+    std::ostringstream sstr;
+    sstr << value;
+    return sstr.str();
+  }
+
+
   void Teleoperation::captureArrowInput(void)
   {
     double cmd = 0;
     int key_pressed;
     std::string header = craftHeader();
     std::string msg;
-    std::ostringstream sstr; 
+    //std::ostringstream sstr; 
 
     /* ---< Create new terminal window >--- */
-    //initscr();
-    newterm(getenv("TERM"), stdout, stdin);
+    WINDOW* window = initscr();
+    //newterm(getenv("TERM"), stdout, stdin);
     noecho();
     start_color();
     keypad ( stdscr, TRUE );
@@ -174,46 +186,58 @@ namespace camera_effector
       {
         case KEY_UP:
           //printw ( "UP\n" );
-          tilt_current_pos_ += step_;
-          //cmd = tilt_current_pos_; 
-          //cmdTilt(cmd);
+          if (tilt_current_pos_ + step_ <= tilt_limits_[1])
+          {
+            tilt_current_pos_ += step_;
+          }
           break;
         case KEY_DOWN:
           //printw ( "DOWN\n" );
-          tilt_current_pos_ -= step_;
-          //cmd = tilt_current_pos_; 
-          //cmdTilt(cmd);
+          if (tilt_current_pos_ - step_ >= tilt_limits_[0])
+          {
+            tilt_current_pos_ -= step_;
+          }
           break;
         case KEY_LEFT:
           //printw ( "LEFT\n" );
-          pan_current_pos_ += step_;
-          //cmd = pan_current_pos_; 
-          //cmdPan(cmd);
+          if (pan_current_pos_ + step_ <= pan_limits_[1])
+          {
+            pan_current_pos_ += step_;
+          }
           break;
         case KEY_RIGHT:
           //printw ( "RIGHT\n" );
-          pan_current_pos_ -= step_;
-          //cmd = pan_current_pos_; 
-          //cmdPan(cmd);
+          if (pan_current_pos_ - step_ >= pan_limits_[0])
+          {
+            pan_current_pos_ -= step_;
+          }
           break;
         case KEY_R:
           pan_current_pos_ = 0;
           tilt_current_pos_ = 0;
-          cmdPan(0);
-          cmdTilt(0);
+          break;
+        case KEY_W:
+          step_ += 0.01;
+          clrtoeol();
+          printw( std::string("Step ---> " + intToStr(step_) + "\r").c_str() );
+          break;
+        case KEY_S:
+          if (step_ - 0.01 >= 0.01)
+          {
+            step_-= 0.01;
+            clrtoeol();
+            printw( std::string("Step ---> " + intToStr(step_) + "\r").c_str() );
+          }
           break;
         default:
+          //clrtoeol();
+          //printw("Key does not have an active operation!!!\r")
           break;
       }
 
-      clear_osstr(&sstr);
-      sstr << pan_current_pos_;
-      msg = "Pan Position: " + sstr.str() + ", Tilt Position: ";
-      clear_osstr(&sstr);
-      sstr << tilt_current_pos_;
-      msg += sstr.str() + "\r";
-
       clrtoeol();
+      msg = "Pan Position: " + intToStr(pan_current_pos_) + 
+        " , Tilt Position: " + intToStr(tilt_current_pos_) + "\r";
       printw(msg.c_str());
       refresh();
     }

@@ -116,6 +116,8 @@ namespace camera_effector
        */
       void clear_osstr(std::ostringstream* sstr);
 
+      std::string intToStr(double value);
+
 
       virtual std::string craftHeader(void);
 

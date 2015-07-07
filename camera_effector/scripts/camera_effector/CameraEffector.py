@@ -180,27 +180,31 @@ class CameraEffector:
                 self.pos_limits_[servo_id]['max'])
             rospy.logfatal("Command is not acceptable!! Staying idle")
             return 0
+
         elif rad > self.pos_limits_[servo_id]['max']:
             rospy.logwarn("Command [%s <--> rad] out of bounds"\
                 + "  ---> Limits: {min: %s, max: %s}. " + \
                 "Commanding at max position", rad, \
                 self.pos_limits_[servo_id]['min'], \
                 self.pos_limits_[servo_id]['max'])
+
             rad = self.pos_limits_[servo_id]['max']
+
         elif rad < self.pos_limits_[servo_id]['min']:
             rospy.logwarn("Command [%s <--> rad] out of bounds"\
                 + "  ---> Limits: {min: %s, max: %s}. " + \
                 "Commanding at min position", rad, \
-                degrees, self.pos_limits_[servo_id]['min'], \
+                self.pos_limits_[servo_id]['min'], \
                 self.pos_limits_[servo_id]['max'])
             rad = self.pos_limits_[servo_id]['min']
         # ----------------------------------- #
 
         # ---< Used mainly for debug purposes >--- #
         degrees = self.servo_ctrl_.radians_to_degrees(rad)
-        rospy.loginfo(\
-            "[%s servo]: Commanding camera at angle: %s radians, %s degrees" % \
-            (servo_id, rad, degrees))
+        if self.debug_:
+            rospy.loginfo(\
+                "[%s servo]: Commanding camera at angle: %s radians, %s degrees" % \
+                (servo_id, rad, degrees))
         rad -= self.offsets_[servo_id]
 
         #  ** Use the transformatio function to transform camera joint angle to 
@@ -210,9 +214,10 @@ class CameraEffector:
             #rad = self.camera_to_servo_transform(rad)
 
         degrees = self.servo_ctrl_.radians_to_degrees(rad)
-        rospy.loginfo(\
-            "[%s servo]: Commanding servo at angle: %s degrees , %s radians" % \
-            (servo_id, degrees, rad))
+        if self.debug_:
+            rospy.loginfo(\
+                "[%s servo]: Commanding servo at angle: %s degrees , %s radians" % \
+                (servo_id, degrees, rad))
         # --------------------------------------- #
         self.servo_ctrl_.set_pos_degrees(servo_id, degrees)
         return 1

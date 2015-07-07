@@ -2,7 +2,7 @@
 <launch>
 
   <node 
-    name="camera_effector"
+    name="camera_effector_teleop"
     pkg="camera_effector"
     type="camera_effector_teleop"
     output="screen"
