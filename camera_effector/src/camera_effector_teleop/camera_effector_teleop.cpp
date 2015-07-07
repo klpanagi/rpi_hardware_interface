@@ -51,7 +51,7 @@ namespace camera_effector
 
   Teleoperation::Teleoperation(const std::string& _nh_namespace):
     nh_(_nh_namespace),
-    step_(1.0),
+    step_(0.02),
     pub_rate_(10)
   {
     nh_.param<double>("pan_joint/limits/min", pan_limits_[0], 1.3962);
@@ -102,11 +102,6 @@ namespace camera_effector
   }
 
 
-  /*!
-   * @brief Crear/Flush ostringstream contents.
-   * @param sstr std::ostringstream pointer to clear.
-   * @return void.
-   */
   void Teleoperation::clear_osstr(std::ostringstream* sstr)
   {
     sstr->str("");
@@ -132,10 +127,6 @@ namespace camera_effector
   }
 
 
-  /*!
-   * @brief Publish current command values.
-   * @return void.
-   */
   void Teleoperation::publish(void)
   {
     std_msgs::Float64 msg;
@@ -240,8 +231,10 @@ Teleoperation* teleop;
 
 void int_signal_handler(int sig)
 {
-  delete teleop;
+  // Send ros::shutdown signal then free teleoperation instance pointer
   ros::shutdown();
+  endwin();
+  delete teleop;
   exit(0);
 }
 

@@ -105,6 +105,7 @@ namespace camera_effector
        */
       virtual void publish(void);
 
+
       virtual void captureArrowInput(void);
 
 
@@ -115,6 +116,7 @@ namespace camera_effector
        */
       void clear_osstr(std::ostringstream* sstr);
 
+
       virtual std::string craftHeader(void);
 
     private:
@@ -123,7 +125,7 @@ namespace camera_effector
 
       double pan_limits_[2];
       double tilt_limits_[2];
-      int step_;
+      double step_;
 
       double pan_current_pos_;
       double tilt_current_pos_;
