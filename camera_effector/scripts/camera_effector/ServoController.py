@@ -55,7 +55,7 @@ class ServoController:
     #
     def __init__(self, debug_on):
         self.debug_ = debug_on
-        self.gpio_ = pigpio.pi()
+        self.gpio_ = None
         self.registered_servos_ = []
         self.servo_pin_ = {}
         self.servo_pos_ = {}
@@ -76,8 +76,25 @@ class ServoController:
         self.servo_error_degrees_ = rospy.get_param( \
             '/servo_controller/servo_params/error_degrees', 0)
 
+        self.__init_pigpiod_comm()
     # ======================================================================= #
 
+    ## 
+    #  Initiates interface with pigpio daemon
+    #
+    def __init_pigpiod_comm(self):
+        pigpio.exceptions = True
+        try:
+            self.gpio_ = pigpio.pi()
+        except:
+            e = sys.exc_info()[0]
+            rospy.logfatal(\
+                "[Servo-Controller]: Failed to interface with pigpiod", \
+                servo_id)
+            rospy.logfatal(e)
+            sys.exit(1)
+        finally:
+            pass
     
     ##
     #  Registers_a servo to Servo Cntroller

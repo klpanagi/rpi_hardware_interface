@@ -54,11 +54,11 @@ namespace camera_effector
     step_(0.02),
     pub_rate_(100)
   {
-    nh_.param<double>("pan_joint/limits/min", pan_limits_[0], 1.3962);
-    nh_.param<double>("pan_joint/limits/max", pan_limits_[1], -1.3962);
+    nh_.param<double>("pan_joint/limits/min", pan_limits_[0], -1.3962);
+    nh_.param<double>("pan_joint/limits/max", pan_limits_[1], 1.3962);
 
-    nh_.param<double>("tilt_joint/limits/min", tilt_limits_[0], 0.6);
-    nh_.param<double>("tilt_joint/limits/max", tilt_limits_[1], -0.6);
+    nh_.param<double>("tilt_joint/limits/min", tilt_limits_[0], -0.6);
+    nh_.param<double>("tilt_joint/limits/max", tilt_limits_[1], 0.6);
 
     nh_.param<std::string>("subscribed_topics/pan_command", topic_pan_cmd_,
       "/camera_effector/pan_command");
