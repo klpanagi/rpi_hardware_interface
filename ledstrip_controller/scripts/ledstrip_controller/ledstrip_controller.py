@@ -92,7 +92,8 @@ class LedstripController():
   ##
   #  
   def state_change_callback(self, data):
-    if data.mode == data.MODE_IDENTIFICATION:
+    if data.mode == data.MODE_IDENTIFICATION or \
+            data.mode == data.MODE_SENSOR_HOLD:
       self.led_control(1)
     else:
       self.led_control(0)
