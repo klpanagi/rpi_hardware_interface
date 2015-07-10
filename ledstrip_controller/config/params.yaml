@@ -5,5 +5,5 @@ subscribed_topics:
   ledstrip_cmd: /kinect/ledstrip/state_cmd
   state_client: /robot/state/clients
 
-led_gpio_pin: 26
+led_gpio_pin: 22
 pub_rate: 1

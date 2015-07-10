@@ -19,7 +19,7 @@ tilt_joint:
   offset: -0.1920
   servo:
     name: tilt
-    pin: 18
+    pin: 27
 
 camera_effector_urdf:
   camera_effector_frame: /camera_effector_frame
