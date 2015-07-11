@@ -80,8 +80,8 @@ class CameraEffector:
         self.subscribers_['tilt_command'] = rospy.get_param( \
             '~subscribed_topics/tilt_command', '/camera_effector/tilt_command')
                 
-        pan_servo_pin = rospy.get_param('~/pan_joint/servo/pin', 17)
-        tilt_servo_pin = rospy.get_param('~/tilt_joint/servo/pin', 18)
+        pan_servo_pin = rospy.get_param('~pan_joint/servo/pin', 17)
+        tilt_servo_pin = rospy.get_param('~tilt_joint/servo/pin', 18)
         self.offsets_['pan'] = rospy.get_param(
             '~pan_joint/offset', 0)
         self.offsets_['tilt'] = rospy.get_param(
