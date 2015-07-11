@@ -1,8 +1,9 @@
 published_topics:
-  ledstrip_state: /ledstrip/state
+  ledstrip_state: /kinect/ledstrip/state
 
 subscribed_topics:
   ledstrip_cmd: /kinect/ledstrip/state_cmd
+  brightness: /kinect/ledstrip/brightness
   state_client: /robot/state/clients
 
 led_gpio_pin: 22
