@@ -43,10 +43,10 @@ import json
 from state_manager_msgs.msg import RobotModeMsg
 from std_msgs.msg import Bool, Float64
 import roslib
-roslib.load_manifest("ledstrip_controller")
+#roslib.load_manifest("ledstrip_controller")
 
 # Dynamic Reconfigure Server
-from dynamic_reconfigure.server import Server as DynRecServer
+#from dynamic_reconfigure.server import Server as DynRecServer
 
 #from ledstrip_controller import ledstrip_controllerConfig as Config
 
