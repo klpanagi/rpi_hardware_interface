@@ -12,6 +12,6 @@ flir_spi:
   delay: 0
   packet_size: 164
   packets_per_frame: 60
-interface_rate: 10 
+interface_rate: 20 
 dataset:
   spline_interpolated_data: '/home/pandora/pandora_ws/src/rpi_hardware_interface/data/flir_lepton/dataset_spline_interp.pandora'

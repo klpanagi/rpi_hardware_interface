@@ -1,6 +1,10 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="namespace" default="pi_camera"/>
+  <arg name="width" default="640" />
+  <arg name="height" default="480" />
+  <arg name="framerate" default="30" />
+
 
   <!-- PIcamera node -->
   <node 
@@ -14,6 +18,9 @@
       file="$(find pi_camera)/config/params.yaml"
       command="load"
     />
+
+  <!--<param name="width" value="$(arg width)" />-->
+  <!--<param name="height" value="$(arg height)" />-->
   
   </node>
 

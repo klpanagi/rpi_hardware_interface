@@ -100,7 +100,7 @@ class LedstripController():
         # -----------< Initiate gpio to control ledstrip > --------- #
         self.gpio_handler_.set_mode(self.ledstrip_gpio_, 1)
         #self.gpio_handler_.write(self.ledstrip_gpio_, 0)
-        self.__led_control(0)
+        self.__led_control(1)
         # ---------------------------------------------------------- #
 
         #self.dyn_rec_server_ = DynRecServer(Config, self.reconfigure)
@@ -132,8 +132,8 @@ class LedstripController():
     #  TODO
     ##
     def __state_change_callback(self, data):
-        if data.mode == data.MODE_IDENTIFICATION or \
-                data.mode == data.MODE_SENSOR_HOLD:
+        if 1 == 1:#data.mode == data.MODE_IDENTIFICATION or \
+#                data.mode == data.MODE_SENSOR_HOLD:
             self.__led_control(1)
         else:
             self.__led_control(0)

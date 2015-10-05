@@ -49,7 +49,9 @@ import rospy
 import thread
 from threading import Thread
 #import picamera.array
+import warnings
 
+#warnings.filterwarnings('warn', category=DeprecationWarning)
 
 class PiCameraRosWrapper:
     ## TODO Load parameters from parameter server!!!
@@ -100,6 +102,8 @@ class PiCameraRosWrapper:
         rospy.loginfo("Shutter Speed: [%s]" % self.camera_.shutter_speed)
         rospy.loginfo("Exposure Speed: [%s]" % self.camera_.exposure_speed)
         rospy.loginfo("Exposure Mode: [%s]" % self.camera_.exposure_mode)
+        rospy.loginfo("Resolution Width: [%s]" %self.res_width_)
+        rospy.loginfo("Resolution Height: [%s]" %self.res_height_)
 
         self.image_pub_ = rospy.Publisher(self.image_topic_, Image, \
             queue_size=1)
@@ -116,7 +120,7 @@ class PiCameraRosWrapper:
     ## Sets camera image capture framerate (fps)
     # @param framerate Camera capture rate in fps
     def set_framerate(self, framerate):
-        self.camera_.framerate = framerate
+        self.camera_.framerate = (framerate, 1)
     #=======================================================================
 
 

@@ -183,7 +183,7 @@ namespace flir_lepton
         i = -1;
         resets += 1;
         // sleep for 1ms
-        ros::Duration(0.001).sleep();
+        ros::Duration(0.01).sleep();
 
         // If resets reach this value, we assume an error on communication with
         // flir-lepton sensor. Perform communication restart
@@ -192,7 +192,7 @@ namespace flir_lepton
           restarts ++;
           ROS_ERROR("[Flir-Lepton]: Error --> resets numbered at [%d]", resets);
           closeDevice();
-          ros::Duration(1.0).sleep();
+          ros::Duration(2.0).sleep();
           openDevice();
           resets = 0;
         }
@@ -268,11 +268,13 @@ namespace flir_lepton
     const std::vector<uint16_t>& thermal_signals, 
     distrib_msgs::FlirLeptonMsg* flirMsg, uint16_t minValue, uint16_t maxValue)
   {
+    float temperSum = 0;
     flirMsg->header.stamp = now_;
     flirMsg->header.frame_id = frame_id_;
 
     craftImageMsg(thermal_signals, &flirMsg->thermalImage, minValue, maxValue);
      
+    scene_tempers_.clear();
     // Vector containing the temperatures in image after calibration and vector
     // with signal raw values 
     for (int i = 0; i < imageHeight_; i++) {
@@ -283,9 +285,12 @@ namespace flir_lepton
         float value = Utils::signalToTemperature(
           thermal_signals.at(i * imageWidth_ + j), calibMap_);
         flirMsg->temperatures.data.push_back(value);
-       
+        scene_tempers_.push_back(value);
+        temperSum += value;
       }
     }
+    scene_avgTemper_ = temperSum / (imageHeight_ * imageWidth_);
+
     flirMsg->temperatures.layout.dim.push_back(std_msgs::MultiArrayDimension());
     flirMsg->temperatures.layout.dim[0].size = 60;
 

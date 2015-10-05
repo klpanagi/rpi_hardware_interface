@@ -105,6 +105,13 @@ namespace flir_lepton
       uint16_t imageWidth_;
       /* ------------------------------------------- */
 
+      /* ------< Scene Temperature Values >--------- */
+
+      std::vector<float> scene_tempers_;
+      float scene_avgTemper_;
+
+      /* ------------------------------------------- */
+
       // Raw sensor signal values to absolute thermal values map
       std::map<uint16_t, float> calibMap_;
       std::string calibFileUri_;

@@ -79,7 +79,7 @@ def writeData(x_data, y_data, fileUri):
 
 
 #### ---- <Load the dataset> ---- ####
-dataset_uri = '/home/klpanagi/Desktop/interp_python/dataset05.pandora'
+dataset_uri = '/home/pandora/pandora_ws/srv/rpi_hardware_interface/data/flir_lepton/dataset05.pandora'
 dataset = readDataset(dataset_uri)
 signals = dataset['x_data'] 
 temps = dataset['y_data']
@@ -102,11 +102,11 @@ plt.legend(['dataset', 'Cubic Spline'], loc='best')
 plt.title('Cubic-spline interpolation')
 
 
-writeData(splineInterp_data['x_data'], splineInterp_data['y_data'], \
-        'dataset_spline_interp.pandora')
+#writeData(splineInterp_data['x_data'], splineInterp_data['y_data'], \
+        #'dataset_spline_interp.pandora')
 
 "Uncomment the following line in order to plot the interplolated data"
-#plt.show()
+plt.show()
 
 #diffList = {}
 #count = 0
